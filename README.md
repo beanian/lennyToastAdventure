@@ -11,4 +11,4 @@ npm install
 npm start
 ```
 
-Then open http://localhost:8080 in your browser to view the placeholder game scene.
+Then open http://localhost:8080 in your browser to play through eight kitchen-themed worlds as Lenny collects toast and avoids Sockroaches.
