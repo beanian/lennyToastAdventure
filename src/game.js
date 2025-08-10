@@ -18,6 +18,7 @@ const game = new Phaser.Game(config);
 let player;
 let cursors;
 let jumpSound;
+let jumpCount = 0;
 
 function preload() {
   // Lenny sprites
@@ -32,7 +33,10 @@ function preload() {
   }
 
   // Audio
-  this.load.audio('jump', 'src/assets/audio/jump.wav');
+  this.load.audio(
+    'jump',
+    'src/assets/audio/cartoon-jump-6462.mp3'
+  );
 }
 
 function create() {
@@ -57,16 +61,6 @@ function create() {
       { key: 'lenny_walk_8' }
     ],
     frameRate: 12,
-    repeat: -1
-  });
-
-  this.anims.create({
-    key: 'jump',
-    frames: [
-      { key: 'lenny_jump_1' },
-      { key: 'lenny_jump_2' }
-    ],
-    frameRate: 6,
     repeat: -1
   });
 
@@ -95,6 +89,7 @@ function create() {
 
 function update() {
   const onGround = player.body.blocked.down;
+  if (onGround) jumpCount = 0;
 
   if (cursors.left.isDown) {
     player.setVelocityX(-160);
@@ -109,12 +104,22 @@ function update() {
     if (onGround) player.play('idle', true);
   }
 
-  if (cursors.up.isDown && onGround) {
+  const jumpPressed = Phaser.Input.Keyboard.JustDown(cursors.up);
+  if (jumpPressed && (onGround || jumpCount < 2)) {
     player.setVelocityY(-450);
     jumpSound.play();
-    player.play('jump', true);
-  } else if (!onGround) {
-    player.play('jump', true);
+    jumpCount++;
+    player.anims.stop();
+    player.setTexture('lenny_jump_1');
+  }
+
+  if (!onGround) {
+    player.anims.stop();
+    if (player.body.velocity.y < 0) {
+      player.setTexture('lenny_jump_1');
+    } else {
+      player.setTexture('lenny_jump_2');
+    }
   }
 }
 
