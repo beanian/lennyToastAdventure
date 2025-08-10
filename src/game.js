@@ -1,4 +1,4 @@
-const VERSION = 'v1.0.2';
+const VERSION = 'v1.0.3';
 document.title = `Lenny Toast Adventure ${VERSION}`;
 
 const config = {
@@ -94,6 +94,7 @@ function create() {
   this.physics.add.overlap(player, killBlock, () => {
     if (isDead) return;
     isDead = true;
+    bgm.stop();
     deathSound.play();
     player.setVelocity(0, 0);
     player.anims.stop();
@@ -112,6 +113,15 @@ function create() {
       player.setPosition(spawnPoint.x, spawnPoint.y);
       jumpCount = 0;
       respawnSound.play();
+      respawnSound.once('complete', () => {
+        bgm.setVolume(0);
+        bgm.play();
+        this.tweens.add({
+          targets: bgm,
+          volume: 0.5,
+          duration: 1000
+        });
+      });
       this.tweens.add({
         targets: player,
         alpha: 1,
@@ -127,7 +137,7 @@ function create() {
   jumpSound = this.sound.add('jump');
   deathSound = this.sound.add('death');
   respawnSound = this.sound.add('respawn');
-  bgm = this.sound.add('bgm', { loop: true });
+  bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });
   bgm.play();
 
   this.add.text(10, 10, `Lenny Toast Adventure Test ${VERSION}`, {
