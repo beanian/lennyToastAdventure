@@ -26,6 +26,13 @@ let deathSound;
 let respawnSound;
 let bgm;
 let isDead = false;
+let sockroach;
+let sockroachCollider;
+let health = 3;
+let healthText;
+let hurtSound;
+let landEnemySound;
+let isInvincible = false;
 const spawnPoint = { x: 100, y: 450 };
 
 function preload() {
@@ -40,6 +47,13 @@ function preload() {
     );
   }
 
+  // Sockroach sprites
+  this.load.spritesheet(
+    'sockroach',
+    'src/assets/sprites/sockroach/sockroach_sprite_sheet_fixed.png',
+    { frameWidth: 64, frameHeight: 64 }
+  );
+
   // Audio
   this.load.audio(
     'jump',
@@ -48,6 +62,8 @@ function preload() {
   this.load.audio('death', 'src/assets/audio/game-over-38511.mp3');
   this.load.audio('respawn', 'src/assets/audio/a_bulldog_respawning.mp3');
   this.load.audio('bgm', 'src/assets/audio/Pixel Jump Groove.mp3');
+  this.load.audio('hurt', 'src/assets/audio/Hurt.wav');
+  this.load.audio('landEnemy', 'src/assets/audio/LandOnEnemy.wav');
 }
 
 function create() {
@@ -75,6 +91,13 @@ function create() {
     repeat: -1
   });
 
+  this.anims.create({
+    key: 'sockroach_walk',
+    frames: this.anims.generateFrameNumbers('sockroach', { start: 0, end: 3 }),
+    frameRate: 8,
+    repeat: -1
+  });
+
   // Player setup
   player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'lenny_idle');
   player.setCollideWorldBounds(true);
@@ -88,53 +111,26 @@ function create() {
 
   const killBlock = this.add.rectangle(600, 540, 40, 40, 0xff0000);
   this.physics.add.existing(killBlock, true);
+  sockroach = this.physics.add.sprite(300, 540, 'sockroach');
+  sockroach.play('sockroach_walk');
+  sockroach.setCollideWorldBounds(true);
+  sockroach.patrolLeft = 250;
+  sockroach.patrolRight = 550;
+  sockroach.setVelocityX(50);
+  sockroachCollider = this.physics.add.collider(sockroach, ground);
 
   this.physics.add.collider(player, ground);
   this.physics.add.collider(player, platform);
-  this.physics.add.overlap(player, killBlock, () => {
-    if (isDead) return;
-    isDead = true;
-    bgm.stop();
-    deathSound.play();
-    player.setVelocity(0, 0);
-    player.anims.stop();
-    player.setTexture('lenny_idle');
-
-    this.tweens.add({
-      targets: player,
-      alpha: 0,
-      angle: 180,
-      duration: 4000,
-      onComplete: () => {
-        player.setAngle(0);
-        player.setPosition(spawnPoint.x, spawnPoint.y);
-        jumpCount = 0;
-        respawnSound.play();
-        respawnSound.once('complete', () => {
-          bgm.setVolume(0);
-          bgm.play();
-          this.tweens.add({
-            targets: bgm,
-            volume: 0.5,
-            duration: 1000
-          });
-        });
-        this.tweens.add({
-          targets: player,
-          alpha: 1,
-          duration: 500,
-          onComplete: () => {
-            isDead = false;
-          }
-        });
-      }
-    });
-  });
+  this.physics.add.collider(player, sockroach);
+  this.physics.add.overlap(player, sockroach, handlePlayerEnemy, null, this);
+  this.physics.add.overlap(player, killBlock, playerDie, null, this);
 
   cursors = this.input.keyboard.createCursorKeys();
   jumpSound = this.sound.add('jump');
   deathSound = this.sound.add('death');
   respawnSound = this.sound.add('respawn');
+  hurtSound = this.sound.add('hurt');
+  landEnemySound = this.sound.add('landEnemy');
   bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });
   bgm.play();
 
@@ -142,6 +138,90 @@ function create() {
     font: '16px Courier',
     fill: '#ffffff'
   });
+  healthText = this.add.text(10, 30, `Health: ${health}`, {
+    font: '16px Courier',
+    fill: '#ffffff'
+  });
+}
+
+function playerDie() {
+  if (isDead) return;
+  isDead = true;
+  bgm.stop();
+  deathSound.play();
+  player.setVelocity(0, 0);
+  player.anims.stop();
+  player.setTexture('lenny_idle');
+
+  this.tweens.add({
+    targets: player,
+    alpha: 0,
+    angle: 180,
+    duration: 4000,
+    onComplete: () => {
+      player.setAngle(0);
+      player.setPosition(spawnPoint.x, spawnPoint.y);
+      jumpCount = 0;
+      health = 3;
+      healthText.setText(`Health: ${health}`);
+      respawnSound.play();
+      respawnSound.once('complete', () => {
+        bgm.setVolume(0);
+        bgm.play();
+        this.tweens.add({
+          targets: bgm,
+          volume: 0.5,
+          duration: 1000
+        });
+      });
+      this.tweens.add({
+        targets: player,
+        alpha: 1,
+        duration: 500,
+        onComplete: () => {
+          isDead = false;
+        }
+      });
+    }
+  });
+}
+
+function handlePlayerEnemy(playerObj, enemy) {
+  if (enemy.alive === false) return;
+  if (playerObj.body.velocity.y > 0 && playerObj.y < enemy.y) {
+    landEnemySound.play();
+    enemy.alive = false;
+    enemy.anims.stop();
+    enemy.setVelocityX(0);
+    playerObj.setVelocityY(-300);
+    sockroachCollider.destroy();
+    enemy.body.checkCollision.none = true;
+    enemy.setCollideWorldBounds(false);
+    enemy.setVelocityY(-200);
+    this.time.delayedCall(1000, () => enemy.destroy());
+  } else {
+    if (isInvincible) return;
+    hurtSound.play();
+    health -= 1;
+    healthText.setText(`Health: ${health}`);
+    isInvincible = true;
+    playerObj.setTint(0xff0000);
+    this.time.addEvent({
+      delay: 100,
+      repeat: 5,
+      callback: () => {
+        playerObj.visible = !playerObj.visible;
+      }
+    });
+    this.time.delayedCall(1000, () => {
+      isInvincible = false;
+      playerObj.clearTint();
+      playerObj.visible = true;
+    });
+    if (health <= 0) {
+      playerDie.call(this);
+    }
+  }
 }
 
 function update() {
@@ -178,6 +258,16 @@ function update() {
       player.setTexture('lenny_jump_1');
     } else {
       player.setTexture('lenny_jump_2');
+    }
+  }
+
+  if (sockroach && sockroach.alive !== false) {
+    if (sockroach.x <= sockroach.patrolLeft) {
+      sockroach.setVelocityX(50);
+      sockroach.setFlipX(false);
+    } else if (sockroach.x >= sockroach.patrolRight) {
+      sockroach.setVelocityX(-50);
+      sockroach.setFlipX(true);
     }
   }
 }
