@@ -93,25 +93,28 @@ function create() {
     player.setVelocity(0, 0);
     player.anims.stop();
     player.setTexture('lenny_idle');
+
     this.tweens.add({
       targets: player,
       alpha: 0,
       angle: 180,
-      duration: 500,
-      onComplete: () => {
-        player.setAngle(0);
-        player.setPosition(spawnPoint.x, spawnPoint.y);
-        jumpCount = 0;
-        respawnSound.play();
-        this.tweens.add({
-          targets: player,
-          alpha: 1,
-          duration: 500,
-          onComplete: () => {
-            isDead = false;
-          }
-        });
-      }
+      duration: 500
+    });
+
+    // Wait for the four second death sound to finish before respawning
+    this.time.delayedCall(4000, () => {
+      player.setAngle(0);
+      player.setPosition(spawnPoint.x, spawnPoint.y);
+      jumpCount = 0;
+      respawnSound.play();
+      this.tweens.add({
+        targets: player,
+        alpha: 1,
+        duration: 500,
+        onComplete: () => {
+          isDead = false;
+        }
+      });
     });
   });
 
