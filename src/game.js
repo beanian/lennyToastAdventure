@@ -1,4 +1,4 @@
-const VERSION = 'v1.0.3';
+const VERSION = 'v1.0.4';
 document.title = `Lenny Toast Adventure ${VERSION}`;
 
 const config = {
@@ -104,32 +104,30 @@ function create() {
       targets: player,
       alpha: 0,
       angle: 180,
-      duration: 500
-    });
-
-    // Wait for the four second death sound to finish before respawning
-    this.time.delayedCall(4000, () => {
-      player.setAngle(0);
-      player.setPosition(spawnPoint.x, spawnPoint.y);
-      jumpCount = 0;
-      respawnSound.play();
-      respawnSound.once('complete', () => {
-        bgm.setVolume(0);
-        bgm.play();
-        this.tweens.add({
-          targets: bgm,
-          volume: 0.5,
-          duration: 1000
+      duration: 4000,
+      onComplete: () => {
+        player.setAngle(0);
+        player.setPosition(spawnPoint.x, spawnPoint.y);
+        jumpCount = 0;
+        respawnSound.play();
+        respawnSound.once('complete', () => {
+          bgm.setVolume(0);
+          bgm.play();
+          this.tweens.add({
+            targets: bgm,
+            volume: 0.5,
+            duration: 1000
+          });
         });
-      });
-      this.tweens.add({
-        targets: player,
-        alpha: 1,
-        duration: 500,
-        onComplete: () => {
-          isDead = false;
-        }
-      });
+        this.tweens.add({
+          targets: player,
+          alpha: 1,
+          duration: 500,
+          onComplete: () => {
+            isDead = false;
+          }
+        });
+      }
     });
   });
 
