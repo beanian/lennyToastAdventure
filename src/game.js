@@ -1,4 +1,4 @@
-const VERSION = 'v1.0.1';
+const VERSION = 'v1.0.2';
 document.title = `Lenny Toast Adventure ${VERSION}`;
 
 const config = {
@@ -24,6 +24,7 @@ let jumpSound;
 let jumpCount = 0;
 let deathSound;
 let respawnSound;
+let bgm;
 let isDead = false;
 const spawnPoint = { x: 100, y: 450 };
 
@@ -46,6 +47,7 @@ function preload() {
   );
   this.load.audio('death', 'src/assets/audio/game-over-38511.mp3');
   this.load.audio('respawn', 'src/assets/audio/a_bulldog_respawning.mp3');
+  this.load.audio('bgm', 'src/assets/audio/Pixel Jump Groove.mp3');
 }
 
 function create() {
@@ -125,6 +127,8 @@ function create() {
   jumpSound = this.sound.add('jump');
   deathSound = this.sound.add('death');
   respawnSound = this.sound.add('respawn');
+  bgm = this.sound.add('bgm', { loop: true });
+  bgm.play();
 
   this.add.text(10, 10, `Lenny Toast Adventure Test ${VERSION}`, {
     font: '16px Courier',
