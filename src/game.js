@@ -19,6 +19,10 @@ let player;
 let cursors;
 let jumpSound;
 let jumpCount = 0;
+let deathSound;
+let respawnSound;
+let isDead = false;
+const spawnPoint = { x: 100, y: 450 };
 
 function preload() {
   // Lenny sprites
@@ -37,6 +41,8 @@ function preload() {
     'jump',
     'src/assets/audio/cartoon-jump-6462.mp3'
   );
+  this.load.audio('death', 'src/assets/audio/game-over-38511.mp3');
+  this.load.audio('respawn', 'src/assets/audio/a_bulldog_respawning.mp3');
 }
 
 function create() {
@@ -65,7 +71,7 @@ function create() {
   });
 
   // Player setup
-  player = this.physics.add.sprite(100, 450, 'lenny_idle');
+  player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'lenny_idle');
   player.setCollideWorldBounds(true);
 
   // Simple test area: ground and a platform
@@ -75,11 +81,44 @@ function create() {
   const platform = this.add.rectangle(400, 400, 200, 20, 0x8B4513);
   this.physics.add.existing(platform, true);
 
+  const killBlock = this.add.rectangle(600, 540, 40, 40, 0xff0000);
+  this.physics.add.existing(killBlock, true);
+
   this.physics.add.collider(player, ground);
   this.physics.add.collider(player, platform);
+  this.physics.add.overlap(player, killBlock, () => {
+    if (isDead) return;
+    isDead = true;
+    deathSound.play();
+    player.setVelocity(0, 0);
+    player.anims.stop();
+    player.setTexture('lenny_idle');
+    this.tweens.add({
+      targets: player,
+      alpha: 0,
+      angle: 180,
+      duration: 500,
+      onComplete: () => {
+        player.setAngle(0);
+        player.setPosition(spawnPoint.x, spawnPoint.y);
+        jumpCount = 0;
+        respawnSound.play();
+        this.tweens.add({
+          targets: player,
+          alpha: 1,
+          duration: 500,
+          onComplete: () => {
+            isDead = false;
+          }
+        });
+      }
+    });
+  });
 
   cursors = this.input.keyboard.createCursorKeys();
   jumpSound = this.sound.add('jump');
+  deathSound = this.sound.add('death');
+  respawnSound = this.sound.add('respawn');
 
   this.add.text(10, 10, 'Lenny Toast Adventure Test', {
     font: '16px Courier',
@@ -88,6 +127,8 @@ function create() {
 }
 
 function update() {
+  if (isDead) return;
+
   const onGround = player.body.blocked.down;
   if (onGround) jumpCount = 0;
 
