@@ -1,3 +1,6 @@
+const VERSION = 'v1.0.1';
+document.title = `Lenny Toast Adventure ${VERSION}`;
+
 const config = {
   type: Phaser.AUTO,
   width: 800,
@@ -123,7 +126,7 @@ function create() {
   deathSound = this.sound.add('death');
   respawnSound = this.sound.add('respawn');
 
-  this.add.text(10, 10, 'Lenny Toast Adventure Test', {
+  this.add.text(10, 10, `Lenny Toast Adventure Test ${VERSION}`, {
     font: '16px Courier',
     fill: '#ffffff'
   });

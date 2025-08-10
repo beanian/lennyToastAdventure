@@ -1,6 +1,6 @@
 {
   "name": "lennytoastadventure",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Pixel art side-scrolling game framework setup with Phaser.",
   "main": "index.js",
   "scripts": {
