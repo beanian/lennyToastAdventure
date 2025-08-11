@@ -236,7 +236,15 @@ function handlePlayerEnemy(playerObj, enemy) {
   const enemyTop = enemy.body.top;
   const falling = playerObj.body.velocity.y > 0;
 
+  console.log('Player-Enemy collision', {
+    playerBottom,
+    enemyTop,
+    playerVelocityY: playerObj.body.velocity.y,
+    falling
+  });
+
   if (falling && playerBottom <= enemyTop + 5) {
+    console.log('Player stomped enemy');
     landEnemySound.play();
     enemy.alive = false;
     enemy.play('sockroach_stomp');
@@ -250,6 +258,7 @@ function handlePlayerEnemy(playerObj, enemy) {
       this.time.delayedCall(1000, () => enemy.destroy());
     });
   } else {
+    console.log('Player hit by enemy');
     if (isInvincible) return;
     hurtSound.play();
     health -= 1;
