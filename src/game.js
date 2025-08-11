@@ -1,4 +1,4 @@
-const VERSION = 'v1.0.4';
+const VERSION = 'v1.0.5';
 document.title = `Lenny Toast Adventure ${VERSION}`;
 
 const config = {
@@ -94,7 +94,7 @@ function create() {
   this.anims.create({
     key: 'sockroach_walk',
     frames: this.anims.generateFrameNumbers('sockroach', {
-      frames: [6, 7, 10, 12]
+      frames: [57, 58, 61, 62]
     }),
     frameRate: 8,
     repeat: -1
@@ -113,9 +113,8 @@ function create() {
 
   const killBlock = this.add.rectangle(600, 540, 40, 40, 0xff0000);
   this.physics.add.existing(killBlock, true);
-  const enemies = this.physics.add.group();
-  // Start on frame 6 to avoid empty transparent frames in the sprite sheet
-  sockroach = enemies.create(300, 540, 'sockroach', 6);
+  // Start on frame 57 to use a visible tile from the sprite sheet
+  sockroach = this.physics.add.sprite(300, 528, 'sockroach', 57);
   sockroach.play('sockroach_walk');
   sockroach.setCollideWorldBounds(true);
   sockroach.patrolLeft = 250;
@@ -125,8 +124,8 @@ function create() {
 
   this.physics.add.collider(player, ground);
   this.physics.add.collider(player, platform);
-  this.physics.add.collider(player, enemies);
-  this.physics.add.overlap(player, enemies, handlePlayerEnemy, null, this);
+  this.physics.add.collider(player, sockroach);
+  this.physics.add.overlap(player, sockroach, handlePlayerEnemy, null, this);
   this.physics.add.overlap(player, killBlock, playerDie, null, this);
 
   cursors = this.input.keyboard.createCursorKeys();
