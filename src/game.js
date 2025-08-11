@@ -153,7 +153,7 @@ function create() {
   sockroach.body.setSize(bodyWidth, bodyHeight);
   sockroach.body.setOffset(
     (sockroach.displayWidth - bodyWidth) / 2,
-    (sockroach.displayHeight - bodyHeight)
+    (sockroach.displayHeight - bodyHeight)-10
   );
   sockroach.setFlipX(true);
   sockroach.setCollideWorldBounds(true);
