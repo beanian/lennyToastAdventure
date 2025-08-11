@@ -48,11 +48,18 @@ function preload() {
   }
 
   // Sockroach sprites
-  this.load.spritesheet(
-    'sockroach',
-    'src/assets/sprites/sockroach/sockroach_sprite_sheet_fixed.png',
-    { frameWidth: 64, frameHeight: 64 }
-  );
+  for (let i = 1; i <= 6; i++) {
+    this.load.image(
+      `sockroach_walk_${i}`,
+      `src/assets/sprites/sockroach/sockroach_walk_${i}.png`
+    );
+  }
+  for (let i = 1; i <= 2; i++) {
+    this.load.image(
+      `sockroach_stomp_${i}`,
+      `src/assets/sprites/sockroach/sockroach_stomp_${i}.png`
+    );
+  }
 
   // Audio
   this.load.audio(
@@ -93,11 +100,26 @@ function create() {
 
   this.anims.create({
     key: 'sockroach_walk',
-    frames: this.anims.generateFrameNumbers('sockroach', {
-      frames: [57, 58, 61, 62]
-    }),
+    frames: [
+      { key: 'sockroach_walk_1' },
+      { key: 'sockroach_walk_2' },
+      { key: 'sockroach_walk_3' },
+      { key: 'sockroach_walk_4' },
+      { key: 'sockroach_walk_5' },
+      { key: 'sockroach_walk_6' }
+    ],
     frameRate: 8,
     repeat: -1
+  });
+
+  this.anims.create({
+    key: 'sockroach_stomp',
+    frames: [
+      { key: 'sockroach_stomp_1' },
+      { key: 'sockroach_stomp_2' }
+    ],
+    frameRate: 10,
+    repeat: 0
   });
 
   // Player setup
@@ -113,8 +135,8 @@ function create() {
 
   const killBlock = this.add.rectangle(600, 540, 40, 40, 0xff0000);
   this.physics.add.existing(killBlock, true);
-  // Start on frame 57 to use a visible tile from the sprite sheet
-  sockroach = this.physics.add.sprite(300, 528, 'sockroach', 57);
+  // Sockroach setup
+  sockroach = this.physics.add.sprite(300, 528, 'sockroach_walk_1');
   sockroach.play('sockroach_walk');
   sockroach.setCollideWorldBounds(true);
   sockroach.patrolLeft = 250;
@@ -194,14 +216,16 @@ function handlePlayerEnemy(playerObj, enemy) {
   if (playerObj.body.velocity.y > 0 && playerObj.y < enemy.y) {
     landEnemySound.play();
     enemy.alive = false;
-    enemy.anims.stop();
-    enemy.setVelocityX(0);
+    enemy.play('sockroach_stomp');
+    enemy.setVelocity(0, 0);
     playerObj.setVelocityY(-300);
     sockroachCollider.destroy();
     enemy.body.checkCollision.none = true;
     enemy.setCollideWorldBounds(false);
-    enemy.setVelocityY(-200);
-    this.time.delayedCall(1000, () => enemy.destroy());
+    enemy.once('animationcomplete-sockroach_stomp', () => {
+      enemy.setVelocityY(-200);
+      this.time.delayedCall(1000, () => enemy.destroy());
+    });
   } else {
     if (isInvincible) return;
     hurtSound.play();
