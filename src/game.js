@@ -149,7 +149,7 @@ function create() {
   sockroach.setScale(sockroachScale);
   // Align sockroach body so it walks on the ground like Lenny
   sockroach.body.setSize(208 * sockroachScale, 241 * sockroachScale);
-  sockroach.body.setOffset(19 * sockroachScale, 20 * sockroachScale);
+  sockroach.body.setOffset(10, 215);
   sockroach.setFlipX(true);
   sockroach.setCollideWorldBounds(true);
   sockroach.setDepth(1);
@@ -160,8 +160,7 @@ function create() {
 
   this.physics.add.collider(player, ground);
   this.physics.add.collider(player, platform);
-  this.physics.add.collider(player, sockroach);
-  this.physics.add.overlap(player, sockroach, handlePlayerEnemy, null, this);
+  this.physics.add.collider(player, sockroach, handlePlayerEnemy, null, this);
   this.physics.add.overlap(player, killBlock, playerDie, null, this);
 
   cursors = this.input.keyboard.createCursorKeys();
