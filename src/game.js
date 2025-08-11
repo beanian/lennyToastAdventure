@@ -1,4 +1,4 @@
-const VERSION = 'v1.0.5';
+const VERSION = 'v1.0.6';
 document.title = `Lenny Toast Adventure ${VERSION}`;
 
 const config = {
@@ -148,8 +148,13 @@ function create() {
   const sockroachScale = player.displayHeight / sockroach.height;
   sockroach.setScale(sockroachScale);
   // Align sockroach body so it walks on the ground like Lenny
-  sockroach.body.setSize(208 * sockroachScale, 241 * sockroachScale);
-  sockroach.body.setOffset(10, 215);
+  const bodyWidth = sockroach.displayWidth * 0.9;
+  const bodyHeight = sockroach.displayHeight * 0.9;
+  sockroach.body.setSize(bodyWidth, bodyHeight);
+  sockroach.body.setOffset(
+    (sockroach.displayWidth - bodyWidth) / 2,
+    sockroach.displayHeight - bodyHeight
+  );
   sockroach.setFlipX(true);
   sockroach.setCollideWorldBounds(true);
   sockroach.setDepth(1);
