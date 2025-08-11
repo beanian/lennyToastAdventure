@@ -102,7 +102,7 @@ function create() {
   player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'lenny_idle');
   player.setCollideWorldBounds(true);
 
-  // Simple test area: ground and a platform
+  // Simple play test area: ground, platform, kill block and sockroach
   const ground = this.add.rectangle(400, 580, 800, 40, 0x8B4513);
   this.physics.add.existing(ground, true);
 
@@ -111,7 +111,8 @@ function create() {
 
   const killBlock = this.add.rectangle(600, 540, 40, 40, 0xff0000);
   this.physics.add.existing(killBlock, true);
-  sockroach = this.physics.add.sprite(300, 540, 'sockroach');
+  const enemies = this.physics.add.group();
+  sockroach = enemies.create(300, 540, 'sockroach');
   sockroach.play('sockroach_walk');
   sockroach.setCollideWorldBounds(true);
   sockroach.patrolLeft = 250;
@@ -121,8 +122,8 @@ function create() {
 
   this.physics.add.collider(player, ground);
   this.physics.add.collider(player, platform);
-  this.physics.add.collider(player, sockroach);
-  this.physics.add.overlap(player, sockroach, handlePlayerEnemy, null, this);
+  this.physics.add.collider(player, enemies);
+  this.physics.add.overlap(player, enemies, handlePlayerEnemy, null, this);
   this.physics.add.overlap(player, killBlock, playerDie, null, this);
 
   cursors = this.input.keyboard.createCursorKeys();
