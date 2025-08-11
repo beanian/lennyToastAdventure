@@ -138,6 +138,9 @@ function create() {
   // Sockroach setup
   sockroach = this.physics.add.sprite(300, 528, 'sockroach_walk_1');
   sockroach.play('sockroach_walk');
+  sockroach.setScale(0.5);
+  sockroach.body.setSize(sockroach.displayWidth, sockroach.displayHeight);
+  sockroach.setFlipX(true);
   sockroach.setCollideWorldBounds(true);
   sockroach.patrolLeft = 250;
   sockroach.patrolRight = 550;
@@ -291,10 +294,10 @@ function update() {
   if (sockroach && sockroach.alive !== false) {
     if (sockroach.x <= sockroach.patrolLeft) {
       sockroach.setVelocityX(50);
-      sockroach.setFlipX(false);
+      sockroach.setFlipX(true);
     } else if (sockroach.x >= sockroach.patrolRight) {
       sockroach.setVelocityX(-50);
-      sockroach.setFlipX(true);
+      sockroach.setFlipX(false);
     }
   }
 }
