@@ -125,23 +125,29 @@ function create() {
   // Player setup
   player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'lenny_idle');
   player.setCollideWorldBounds(true);
+  player.setDepth(1);
 
   // Simple play test area: ground, platform, kill block and sockroach
   const ground = this.add.rectangle(400, 580, 800, 40, 0x8B4513);
+  ground.setDepth(-1);
   this.physics.add.existing(ground, true);
 
   const platform = this.add.rectangle(400, 400, 200, 20, 0x8B4513);
+  platform.setDepth(-1);
   this.physics.add.existing(platform, true);
 
   const killBlock = this.add.rectangle(600, 540, 40, 40, 0xff0000);
+  killBlock.setDepth(-1);
   this.physics.add.existing(killBlock, true);
   // Sockroach setup
   sockroach = this.physics.add.sprite(300, 528, 'sockroach_walk_1');
   sockroach.play('sockroach_walk');
-  sockroach.setScale(0.5);
+  const sockroachScale = player.displayHeight / sockroach.height;
+  sockroach.setScale(sockroachScale);
   sockroach.body.setSize(sockroach.displayWidth, sockroach.displayHeight);
   sockroach.setFlipX(true);
   sockroach.setCollideWorldBounds(true);
+  sockroach.setDepth(1);
   sockroach.patrolLeft = 250;
   sockroach.patrolRight = 550;
   sockroach.setVelocityX(50);
