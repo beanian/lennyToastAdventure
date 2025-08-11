@@ -126,6 +126,9 @@ function create() {
   player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'lenny_idle');
   player.setCollideWorldBounds(true);
   player.setDepth(1);
+  // Trim transparent bounds so Lenny's feet sit flush with the ground
+  player.body.setSize(48, 45);
+  player.body.setOffset(10, 6);
 
   // Simple play test area: ground, platform, kill block and sockroach
   const ground = this.add.rectangle(400, 580, 800, 40, 0x8B4513);
@@ -144,7 +147,9 @@ function create() {
   sockroach.play('sockroach_walk');
   const sockroachScale = player.displayHeight / sockroach.height;
   sockroach.setScale(sockroachScale);
-  sockroach.body.setSize(sockroach.displayWidth, sockroach.displayHeight);
+  // Align sockroach body so it walks on the ground like Lenny
+  sockroach.body.setSize(208 * sockroachScale, 241 * sockroachScale);
+  sockroach.body.setOffset(19 * sockroachScale, 20 * sockroachScale);
   sockroach.setFlipX(true);
   sockroach.setCollideWorldBounds(true);
   sockroach.setDepth(1);
