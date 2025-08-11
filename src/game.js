@@ -149,7 +149,7 @@ function create() {
   sockroach.setScale(sockroachScale);
   // Align sockroach body so it walks on the ground like Lenny
   sockroach.body.setSize(208 * sockroachScale, 241 * sockroachScale);
-  sockroach.body.setOffset(19 * sockroachScale, 20 * sockroachScale);
+  sockroach.body.setOffset(10,215);
   sockroach.setFlipX(true);
   sockroach.setCollideWorldBounds(true);
   sockroach.setDepth(1);
