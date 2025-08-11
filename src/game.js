@@ -160,8 +160,7 @@ function create() {
 
   this.physics.add.collider(player, ground);
   this.physics.add.collider(player, platform);
-  this.physics.add.collider(player, sockroach);
-  this.physics.add.overlap(player, sockroach, handlePlayerEnemy, null, this);
+  this.physics.add.collider(player, sockroach, handlePlayerEnemy, null, this);
   this.physics.add.overlap(player, killBlock, playerDie, null, this);
 
   cursors = this.input.keyboard.createCursorKeys();
