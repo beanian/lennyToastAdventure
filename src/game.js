@@ -34,6 +34,10 @@ let hurtSound;
 let landEnemySound;
 let isInvincible = false;
 const spawnPoint = { x: 100, y: 450 };
+let toastSound;
+let toasts;
+let toastCount = 0;
+let toastText;
 
 function preload() {
   // Lenny sprites
@@ -61,6 +65,9 @@ function preload() {
     );
   }
 
+  // Toast sprite
+  this.load.image('toast', 'src/assets/sprites/toast/toast_sprite.png');
+
   // Audio
   this.load.audio(
     'jump',
@@ -71,6 +78,7 @@ function preload() {
   this.load.audio('bgm', 'src/assets/audio/Pixel Jump Groove.mp3');
   this.load.audio('hurt', 'src/assets/audio/Hurt.wav');
   this.load.audio('landEnemy', 'src/assets/audio/LandOnEnemy.wav');
+  this.load.audio('toastCollect', 'src/assets/audio/toast-collect.mp3');
 }
 
 function create() {
@@ -142,6 +150,26 @@ function create() {
   const killBlock = this.add.rectangle(600, 540, 40, 40, 0xff0000);
   killBlock.setDepth(-1);
   this.physics.add.existing(killBlock, true);
+  // Toast collectibles
+  toasts = this.physics.add.group({ allowGravity: false, immovable: true });
+  const toastPositions = [
+    { x: 200, y: 520 },
+    { x: 450, y: 360 },
+    { x: 650, y: 520 }
+  ];
+  toastPositions.forEach(pos => {
+    const toast = toasts.create(pos.x, pos.y, 'toast');
+    const toastScale = (player.displayHeight / toast.height) * 0.5;
+    toast.setScale(toastScale);
+    toast.bobTween = this.tweens.add({
+      targets: toast,
+      y: pos.y - 10,
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+  });
   // Sockroach setup
   sockroach = this.physics.add.sprite(300, 528, 'sockroach_walk_1');
   sockroach.play('sockroach_walk');
@@ -167,6 +195,7 @@ function create() {
   this.physics.add.collider(player, platform);
   this.physics.add.collider(player, sockroach, handlePlayerEnemy, null, this);
   this.physics.add.overlap(player, killBlock, playerDie, null, this);
+  this.physics.add.overlap(player, toasts, collectToast, null, this);
 
   cursors = this.input.keyboard.createCursorKeys();
   jumpSound = this.sound.add('jump');
@@ -174,6 +203,7 @@ function create() {
   respawnSound = this.sound.add('respawn');
   hurtSound = this.sound.add('hurt');
   landEnemySound = this.sound.add('landEnemy');
+  toastSound = this.sound.add('toastCollect');
   bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });
   bgm.play();
 
@@ -182,6 +212,10 @@ function create() {
     fill: '#ffffff'
   });
   healthText = this.add.text(10, 30, `Health: ${health}`, {
+    font: '16px Courier',
+    fill: '#ffffff'
+  });
+  toastText = this.add.text(10, 50, `Toast: ${toastCount}`, {
     font: '16px Courier',
     fill: '#ffffff'
   });
@@ -283,6 +317,21 @@ function handlePlayerEnemy(playerObj, enemy) {
       playerDie.call(this);
     }
   }
+}
+
+function collectToast(playerObj, toast) {
+  toast.bobTween.stop();
+  toast.body.enable = false;
+  this.tweens.add({
+    targets: toast,
+    scale: toast.scale * 1.5,
+    alpha: 0,
+    duration: 300,
+    onComplete: () => toast.destroy()
+  });
+  toastSound.play();
+  toastCount += 1;
+  toastText.setText(`Toast: ${toastCount}`);
 }
 
 function update() {
