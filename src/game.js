@@ -153,7 +153,7 @@ function create() {
   sockroach.body.setSize(bodyWidth, bodyHeight);
   sockroach.body.setOffset(
     (sockroach.displayWidth - bodyWidth) / 2,
-    (sockroach.displayHeight - bodyHeight)
+    (sockroach.displayHeight - bodyHeight)-10
   );
   sockroach.setFlipX(true);
   sockroach.setCollideWorldBounds(true);
@@ -234,12 +234,14 @@ function handlePlayerEnemy(playerObj, enemy) {
 
   const playerBottom = playerObj.body.bottom;
   const enemyTop = enemy.body.top;
-  const falling = playerObj.body.velocity.y > 0;
+  const falling =
+    playerObj.body.velocity.y > 0 || playerObj.body.prev.y < playerObj.body.y;
 
   console.log('Player-Enemy collision', {
     playerBottom,
     enemyTop,
     playerVelocityY: playerObj.body.velocity.y,
+    previousY: playerObj.body.prev.y,
     falling
   });
 
