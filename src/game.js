@@ -29,7 +29,7 @@ let isDead = false;
 let sockroach;
 let sockroachCollider;
 let health = 3;
-let healthText;
+let healthIcons;
 let hurtSound;
 let landEnemySound;
 let isInvincible = false;
@@ -37,7 +37,12 @@ const spawnPoint = { x: 100, y: 450 };
 let toastSound;
 let toasts;
 let toastCount = 0;
-let toastText;
+let toastStack;
+let toastNumberText;
+const toastStackBase = { x: 780, y: 80 };
+const toastSliceHeight = 20;
+const healthBase = { x: 10, y: 30 };
+const healthSliceSpacing = 25;
 
 function preload() {
   // Lenny sprites
@@ -211,14 +216,141 @@ function create() {
     font: '16px Courier',
     fill: '#ffffff'
   });
-  healthText = this.add.text(10, 30, `Health: ${health}`, {
-    font: '16px Courier',
-    fill: '#ffffff'
+  healthIcons = this.add.group();
+  for (let i = 0; i < health; i++) {
+    const slice = this.add.sprite(
+      healthBase.x + i * healthSliceSpacing,
+      healthBase.y,
+      'toast'
+    );
+    slice.setScale(0.5);
+    slice.setOrigin(0, 0);
+    this.tweens.add({
+      targets: slice,
+      y: '-=2',
+      yoyo: true,
+      repeat: -1,
+      duration: 800,
+      ease: 'Sine.easeInOut'
+    });
+    healthIcons.add(slice);
+  }
+
+  toastStack = this.add.group();
+  toastNumberText = this.add
+    .text(toastStackBase.x - 20, toastStackBase.y - 40, toastCount.toString(), {
+      font: '16px Courier',
+      fill: '#8B4513',
+      stroke: '#FFD700',
+      strokeThickness: 2
+    })
+    .setOrigin(1, 0);
+}
+
+function refreshHealthUI(scene) {
+  const current = healthIcons.getLength();
+  if (current > health) {
+    for (let i = current; i > health; i--) {
+      const slice = healthIcons.getChildren()[i - 1];
+      healthIcons.remove(slice);
+      scene.tweens.add({
+        targets: slice,
+        x: slice.x + 30,
+        y: slice.y + 30,
+        angle: 45,
+        alpha: 0,
+        duration: 500,
+        onComplete: () => slice.destroy()
+      });
+      const crumbs = scene.add.particles('toast');
+      crumbs
+        .createEmitter({
+          speed: { min: -50, max: 50 },
+          scale: { start: 0.1, end: 0 },
+          lifespan: 300
+        })
+        .explode(10, slice.x, slice.y);
+      scene.time.delayedCall(300, () => crumbs.destroy());
+    }
+  } else if (current < health) {
+    for (let i = current; i < health; i++) {
+      const slice = scene.add.sprite(
+        healthBase.x + i * healthSliceSpacing,
+        healthBase.y,
+        'toast'
+      );
+      slice.setScale(0.5);
+      slice.setOrigin(0, 0);
+      scene.tweens.add({
+        targets: slice,
+        x: slice.x,
+        y: slice.y,
+        scaleX: { from: 0, to: 0.5 },
+        scaleY: { from: 0, to: 0.5 },
+        duration: 300,
+        ease: 'Back.out'
+      });
+      scene.tweens.add({
+        targets: slice,
+        y: '-=2',
+        yoyo: true,
+        repeat: -1,
+        duration: 800,
+        ease: 'Sine.easeInOut'
+      });
+      healthIcons.add(slice);
+    }
+  }
+  healthIcons.getChildren().forEach(s => {
+    if (health <= 1) {
+      s.setTint(0x5c4033);
+    } else {
+      s.clearTint();
+    }
   });
-  toastText = this.add.text(10, 50, `Toast: ${toastCount}`, {
-    font: '16px Courier',
-    fill: '#ffffff'
+}
+
+function addToastSlice(scene) {
+  const idx = toastStack.getLength();
+  const slice = scene.add.sprite(
+    toastStackBase.x,
+    toastStackBase.y + 30,
+    'toast'
+  );
+  slice.setScale(0.5);
+  slice.setOrigin(1, 1);
+  toastStack.add(slice);
+  scene.tweens.add({
+    targets: slice,
+    y: toastStackBase.y - idx * toastSliceHeight,
+    duration: 400,
+    ease: 'Bounce.easeOut'
   });
+  const crumbs = scene.add.particles('toast');
+  crumbs
+    .createEmitter({
+      speed: { min: -30, max: 30 },
+      scale: { start: 0.1, end: 0 },
+      lifespan: 300
+    })
+    .explode(5, toastStackBase.x, toastStackBase.y - idx * toastSliceHeight);
+  scene.time.delayedCall(300, () => crumbs.destroy());
+  toastNumberText.setText(toastCount.toString());
+  scene.tweens.add({
+    targets: toastNumberText,
+    scale: { from: 1.2, to: 1 },
+    duration: 200,
+    ease: 'Sine.easeOut'
+  });
+  if ([10, 50, 100].includes(toastCount)) {
+    scene.tweens.add({
+      targets: toastStack.getChildren(),
+      scaleX: '+=0.1',
+      scaleY: '+=0.1',
+      yoyo: true,
+      duration: 200
+    });
+  }
 }
 
 function playerDie() {
@@ -240,7 +372,7 @@ function playerDie() {
       player.setPosition(spawnPoint.x, spawnPoint.y);
       jumpCount = 0;
       health = 3;
-      healthText.setText(`Health: ${health}`);
+      refreshHealthUI(this);
       respawnSound.play();
       respawnSound.once('complete', () => {
         bgm.setVolume(0);
@@ -298,7 +430,7 @@ function handlePlayerEnemy(playerObj, enemy) {
     if (isInvincible) return;
     hurtSound.play();
     health -= 1;
-    healthText.setText(`Health: ${health}`);
+    refreshHealthUI(this);
     isInvincible = true;
     playerObj.setTint(0xff0000);
     this.time.addEvent({
@@ -331,7 +463,7 @@ function collectToast(playerObj, toast) {
   });
   toastSound.play();
   toastCount += 1;
-  toastText.setText(`Toast: ${toastCount}`);
+  addToastSlice(this);
 }
 
 function update() {
