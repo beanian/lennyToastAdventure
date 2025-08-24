@@ -40,7 +40,8 @@ let toastCount = 0;
 let toastStack;
 let toastNumberText;
 const toastStackBase = { x: 780, y: 80 };
-const toastSliceHeight = 20;
+let toastSliceHeight = 20;
+let hudToastScale;
 const healthBase = { x: 10, y: 30 };
 const healthSliceSpacing = 25;
 
@@ -235,15 +236,23 @@ function create() {
     });
     healthIcons.add(slice);
   }
+  const toastImage = this.textures.get('toast').getSourceImage();
+  hudToastScale = (player.displayHeight / toastImage.height) * 0.25;
+  toastSliceHeight = toastImage.height * hudToastScale;
 
   toastStack = this.add.group();
   toastNumberText = this.add
-    .text(toastStackBase.x - 20, toastStackBase.y - 40, toastCount.toString(), {
-      font: '16px Courier',
-      fill: '#8B4513',
-      stroke: '#FFD700',
-      strokeThickness: 2
-    })
+    .text(
+      toastStackBase.x - toastSliceHeight,
+      toastStackBase.y - toastSliceHeight * 2,
+      toastCount.toString(),
+      {
+        font: '16px Courier',
+        fill: '#8B4513',
+        stroke: '#FFD700',
+        strokeThickness: 2
+      }
+    )
     .setOrigin(1, 0);
 }
 
@@ -262,14 +271,18 @@ function refreshHealthUI(scene) {
         duration: 500,
         onComplete: () => slice.destroy()
       });
-      const crumbs = scene.add.particles('toast');
-      crumbs
-        .createEmitter({
+      const crumbs = scene.add.particles(
+        slice.x,
+        slice.y,
+        'toast',
+        undefined,
+        {
           speed: { min: -50, max: 50 },
           scale: { start: 0.1, end: 0 },
           lifespan: 300
-        })
-        .explode(10, slice.x, slice.y);
+        }
+      );
+      crumbs.explode(10);
       scene.time.delayedCall(300, () => crumbs.destroy());
     }
   } else if (current < health) {
@@ -314,10 +327,10 @@ function addToastSlice(scene) {
   const idx = toastStack.getLength();
   const slice = scene.add.sprite(
     toastStackBase.x,
-    toastStackBase.y + 30,
+    toastStackBase.y + toastSliceHeight,
     'toast'
   );
-  slice.setScale(0.5);
+  slice.setScale(hudToastScale);
   slice.setOrigin(1, 1);
   toastStack.add(slice);
   scene.tweens.add({
@@ -326,14 +339,18 @@ function addToastSlice(scene) {
     duration: 400,
     ease: 'Bounce.easeOut'
   });
-  const crumbs = scene.add.particles('toast');
-  crumbs
-    .createEmitter({
+  const crumbs = scene.add.particles(
+    toastStackBase.x,
+    toastStackBase.y - idx * toastSliceHeight,
+    'toast',
+    undefined,
+    {
       speed: { min: -30, max: 30 },
       scale: { start: 0.1, end: 0 },
       lifespan: 300
-    })
-    .explode(5, toastStackBase.x, toastStackBase.y - idx * toastSliceHeight);
+    }
+  );
+  crumbs.explode(5);
   scene.time.delayedCall(300, () => crumbs.destroy());
   toastNumberText.setText(toastCount.toString());
   scene.tweens.add({
