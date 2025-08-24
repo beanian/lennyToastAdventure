@@ -159,6 +159,8 @@ function create() {
   ];
   toastPositions.forEach(pos => {
     const toast = toasts.create(pos.x, pos.y, 'toast');
+    const toastScale = (player.displayHeight / toast.height) * 0.5;
+    toast.setScale(toastScale);
     toast.bobTween = this.tweens.add({
       targets: toast,
       y: pos.y - 10,
@@ -322,7 +324,7 @@ function collectToast(playerObj, toast) {
   toast.body.enable = false;
   this.tweens.add({
     targets: toast,
-    scale: 1.5,
+    scale: toast.scale * 1.5,
     alpha: 0,
     duration: 300,
     onComplete: () => toast.destroy()
