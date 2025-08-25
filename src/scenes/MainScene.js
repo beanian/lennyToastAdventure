@@ -95,15 +95,19 @@ export default class MainScene extends Phaser.Scene {
       .image(toastX, toastY, 'toast')
       .setOrigin(0, 0)
       .setScale(toastScale);
-    this.toastText = this.add.text(
-      this.toastIcon.x + this.toastIcon.displayWidth + 5,
-      this.toastIcon.y,
-      `${this.toastCount}`,
-      {
-        font: '16px Courier',
-        fill: '#ffffff'
-      }
-    );
+    this.toastText = this.add
+      .text(
+        this.toastIcon.x + this.toastIcon.displayWidth + 5,
+        this.toastIcon.y + this.toastIcon.displayHeight / 2,
+        `${this.toastCount}`,
+        {
+          font: 'bold 24px Courier',
+          fill: '#ffcc00'
+        }
+      )
+      .setOrigin(0, 0.5)
+      .setStroke('#000', 4);
+    this.toastText.setShadow(2, 2, '#000', 2, true, true);
   }
 
   playerDie() {
@@ -207,6 +211,12 @@ export default class MainScene extends Phaser.Scene {
     this.toastSound.play();
     this.toastCount += 1;
     this.toastText.setText(`${this.toastCount}`);
+    this.tweens.add({
+      targets: this.toastText,
+      scale: { from: 1.3, to: 1 },
+      duration: 200,
+      ease: 'Cubic.easeOut'
+    });
   }
 
   createHealthIcons() {
