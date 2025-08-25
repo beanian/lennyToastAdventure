@@ -88,8 +88,11 @@ export default class MainScene extends Phaser.Scene {
     this.createHealthIcons();
     const toastSrc = this.textures.get('toast').getSourceImage();
     const toastScale = (this.player.displayHeight / toastSrc.height) * 0.5;
+    const lastHealth = this.healthIcons[this.healthIcons.length - 1];
+    const toastX = lastHealth.x + lastHealth.displayWidth + 20;
+    const toastY = lastHealth.y;
     this.toastIcon = this.add
-      .image(10, 50, 'toast')
+      .image(toastX, toastY, 'toast')
       .setOrigin(0, 0)
       .setScale(toastScale);
     this.toastText = this.add.text(
