@@ -12,6 +12,7 @@ export default class MainScene extends Phaser.Scene {
     Player.preload(this);
     Sockroach.preload(this);
     this.load.image('toast', 'src/assets/sprites/toast/toast_sprite.png');
+    this.load.image('lenny_face', 'src/assets/sprites/lenny/lenny_face.png');
     this.load.audio('death', 'src/assets/audio/game-over-38511.mp3');
     this.load.audio('respawn', 'src/assets/audio/a_bulldog_respawning.mp3');
     this.load.audio('bgm', 'src/assets/audio/Pixel Jump Groove.mp3');
@@ -84,10 +85,7 @@ export default class MainScene extends Phaser.Scene {
       font: '16px Courier',
       fill: '#ffffff'
     });
-    this.healthText = this.add.text(10, 30, `Health: ${this.health}`, {
-      font: '16px Courier',
-      fill: '#ffffff'
-    });
+    this.createHealthIcons();
     this.toastText = this.add.text(10, 50, `Toast: ${this.toastCount}`, {
       font: '16px Courier',
       fill: '#ffffff'
@@ -113,7 +111,7 @@ export default class MainScene extends Phaser.Scene {
         this.player.setPosition(this.spawnPoint.x, this.spawnPoint.y);
         this.player.jumpCount = 0;
         this.health = 3;
-        this.healthText.setText(`Health: ${this.health}`);
+        this.resetHealthIcons();
         this.respawnSound.play();
         this.respawnSound.once('complete', () => {
           this.bgm.setVolume(0);
@@ -161,7 +159,7 @@ export default class MainScene extends Phaser.Scene {
       if (this.isInvincible) return;
       this.hurtSound.play();
       this.health -= 1;
-      this.healthText.setText(`Health: ${this.health}`);
+      this.removeHealthIcon();
       this.isInvincible = true;
       playerObj.setTint(0xff0000);
       this.time.addEvent({
@@ -195,6 +193,40 @@ export default class MainScene extends Phaser.Scene {
     this.toastSound.play();
     this.toastCount += 1;
     this.toastText.setText(`Toast: ${this.toastCount}`);
+  }
+
+  createHealthIcons() {
+    const srcImage = this.textures.get('lenny_face').getSourceImage();
+    const scale = (this.player.displayHeight / srcImage.height) * 0.5;
+    this.healthIcons = [];
+    for (let i = 0; i < this.health; i++) {
+      const x = 10 + i * (srcImage.width * scale + 5);
+      const icon = this.add.image(x, 30, 'lenny_face').setOrigin(0, 0);
+      icon.setScale(scale);
+      this.healthIcons.push(icon);
+    }
+  }
+
+  removeHealthIcon() {
+    const icon = this.healthIcons.pop();
+    if (!icon) return;
+    this.tweens.add({
+      targets: icon,
+      y: icon.y - 20,
+      angle: 360,
+      scale: 0,
+      alpha: 0,
+      duration: 500,
+      ease: 'Cubic.easeIn',
+      onComplete: () => icon.destroy()
+    });
+  }
+
+  resetHealthIcons() {
+    if (this.healthIcons) {
+      this.healthIcons.forEach(icon => icon.destroy());
+    }
+    this.createHealthIcons();
   }
 
   update() {
