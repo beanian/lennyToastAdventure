@@ -462,17 +462,8 @@
  "tileheight":16,
  "tilesets":[
         {
-         "columns":7,
          "firstgid":1,
-         "image":"..\/Len Learn\/Assets\/Tiles\/nature-paltformer-tileset-16x16.png",
-         "imageheight":176,
-         "imagewidth":112,
-         "margin":0,
-         "name":"nature-paltformer-tileset-16x16",
-         "spacing":0,
-         "tilecount":77,
-         "tileheight":16,
-         "tilewidth":16
+         "source":"tileset.tsj"
         }],
  "tilewidth":16,
  "type":"map",

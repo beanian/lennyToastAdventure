@@ -8,29 +8,6 @@ export default class Level1Scene extends Phaser.Scene {
     super('Level1');
   }
 
-  preload() {
-    this.load.tilemapTiledJSON(
-      'level1',
-      'src/levels/level1/lennyTest.tmj'
-    );
-    this.load.image(
-      'tiles',
-      'src/levels/level1/nature-paltformer-tileset-16x16.png'
-    );
-
-    Player.preload(this);
-    Sockroach.preload(this);
-    this.load.image('toast', 'src/assets/sprites/toast/toast_sprite.png');
-    this.load.image('lenny_face', 'src/assets/sprites/lenny/lenny_face.png');
-
-    this.load.audio('bgm', 'src/assets/audio/Pixel Jump Groove.mp3');
-    this.load.audio('toastCollect', 'src/assets/audio/toast-collect.mp3');
-    this.load.audio('hurt', 'src/assets/audio/Hurt.wav');
-    this.load.audio('landEnemy', 'src/assets/audio/LandOnEnemy.wav');
-    this.load.audio('death', 'src/assets/audio/game-over-38511.mp3');
-    this.load.audio('respawn', 'src/assets/audio/a_bulldog_respawning.mp3');
-  }
-
   create() {
     // --- Map + tiles ---
     const map = this.make.tilemap({ key: 'level1' });
