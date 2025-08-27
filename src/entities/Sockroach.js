@@ -50,17 +50,15 @@ export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
     this.alive = true;
   }
 
-  update(_, delta) {
+  update() {
     if (!this.alive) return;
 
-    const dt = (delta / 1000) * this.scene.physics.world.timeScale;
-    const nextX = this.x + this.body.velocity.x * dt;
-
-    if (nextX <= this.patrolLeft) {
-      this.x = this.patrolLeft;
+    // Reverse direction if we hit the patrol bounds or world bounds
+    if (this.body.blocked.left || this.x <= this.patrolLeft) {
+      this.x = Math.max(this.x, this.patrolLeft);
       this.setVelocityX(this.speed);
-    } else if (nextX >= this.patrolRight) {
-      this.x = this.patrolRight;
+    } else if (this.body.blocked.right || this.x >= this.patrolRight) {
+      this.x = Math.min(this.x, this.patrolRight);
       this.setVelocityX(-this.speed);
     }
 
