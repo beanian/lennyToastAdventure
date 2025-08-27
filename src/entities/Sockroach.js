@@ -55,23 +55,12 @@ export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
       (this.displayHeight - bodyHeight) + 22
     );
 
-    this.setFlipX(true);
+    //this.setFlipX(false);
     this.setCollideWorldBounds(true);
     this.setDepth(1);
     this.patrolLeft = x - 50;
     this.patrolRight = x + 50;
     this.setVelocityX(50);
     this.alive = true;
-  }
-
-  update() {
-    if (this.alive === false) return;
-    if (this.x <= this.patrolLeft) {
-      this.setVelocityX(50);
-      this.setFlipX(true);
-    } else if (this.x >= this.patrolRight) {
-      this.setVelocityX(-50);
-      this.setFlipX(false);
-    }
   }
 }
