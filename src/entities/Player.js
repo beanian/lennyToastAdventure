@@ -51,7 +51,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.body.setSize(48 * scale, 45 * scale);
     this.body.setOffset(10 * scale, 18 * scale);
 
-    this.input = inputService;
+    // Store input service under a non-reserved property to avoid clashing
+    // with Phaser's own `input` component on game objects
+    this.inputService = inputService;
     this.jumpSound = scene.sound.add('jump');
     this.jumpCount = 0;
   }
@@ -60,11 +62,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const onGround = this.body.blocked.down;
     if (onGround) this.jumpCount = 0;
 
-    if (this.input.left()) {
+    if (this.inputService.left()) {
       this.setVelocityX(-160);
       this.setFlipX(true);
       if (onGround) this.play('walk', true);
-    } else if (this.input.right()) {
+    } else if (this.inputService.right()) {
       this.setVelocityX(160);
       this.setFlipX(false);
       if (onGround) this.play('walk', true);
@@ -73,7 +75,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       if (onGround) this.play('idle', true);
     }
 
-    const jumpPressed = this.input.jumpJustPressed();
+    const jumpPressed = this.inputService.jumpJustPressed();
     if (jumpPressed && (onGround || this.jumpCount < 2)) {
       this.setVelocityY(-450);
       this.jumpSound.play();
