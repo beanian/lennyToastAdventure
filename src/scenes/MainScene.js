@@ -19,8 +19,11 @@ export default class MainScene extends Phaser.Scene {
     this.load.audio('hurt', 'src/assets/audio/Hurt.wav');
     this.load.audio('landEnemy', 'src/assets/audio/LandOnEnemy.wav');
     this.load.audio('toastCollect', 'src/assets/audio/toast-collect.mp3');
-    this.load.image('tiles', 'src/assets/tileset_placeholder.png');
-    this.load.tilemapTiledJSON('level', 'src/tilemaps/lennyTest.tmj');
+    this.load.image(
+      'tiles',
+      'src/levels/level1/nature-paltformer-tileset-16x16.png'
+    );
+    this.load.tilemapTiledJSON('level', 'src/levels/level1/lennyTest.tmj');
   }
 
   create() {
