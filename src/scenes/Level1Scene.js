@@ -192,16 +192,29 @@ export default class Level1Scene extends Phaser.Scene {
     const enemy = new Sockroach(this, x, y, this.player.displayHeight);
     enemy.play('sockroach_walk');
     enemy.speed = Number(props.speed ?? 60);
-    // Start moving left by default
-    enemy.setVelocityX(-enemy.speed);
 
+    // Default movement is left/right unless a patrol path is provided
     if (props.pathName) {
       const paths = map.getObjectLayer('Paths');
       const pathObj = paths?.objects.find(o => o.name === props.pathName);
       if (pathObj?.polyline) {
-        enemy.patrol = pathObj.polyline.map(p => pathObj.x + p.x);
+        // Normalize polyline points to world space once, ignoring Y so enemy stays grounded
+        const baseY = enemy.y;
+        const pts = pathObj.polyline.map(p => ({
+          x: pathObj.x + p.x,
+          y: baseY
+        }));
+        // Ensure patrol moves monotonically from left to right
+        pts.sort((a, b) => a.x - b.x);
+        enemy.patrol = pts;
         enemy.patrolIndex = 0;
+        enemy.patrolDir = 1;
+        // Start stationary; update loop will drive movement
+        enemy.setVelocity(0, 0);
       }
+    } else {
+      // Start moving left by default when no path is supplied
+      enemy.setVelocityX(-enemy.speed);
     }
 
     this.enemies.add(enemy);
@@ -235,16 +248,26 @@ export default class Level1Scene extends Phaser.Scene {
   update() {
     this.player.update();
     this.enemies.children.iterate(e => {
-      if (!e) return;
+      if (!e || e.alive === false) return;
       if (e.patrol && e.patrol.length >= 2) {
-       const tgtX = e.patrol[e.patrolIndex];
-        const dx = tgtX - e.x;
-        const dir = Math.sign(dx);
-        e.setVelocityX(dir * e.speed);
-        if (Math.abs(dx) < 3) {
-          e.patrolIndex = (e.patrolIndex + 1) % e.patrol.length;
+        // Determine the next waypoint based on current index and direction
+        let nextIndex = e.patrolIndex + e.patrolDir;
+        if (!e.patrol[nextIndex]) {
+          // Reverse direction at the ends of the path
+          e.patrolDir *= -1;
+          nextIndex = e.patrolIndex + e.patrolDir;
         }
-        e.flipX = e.body.velocity.x < 0;
+        const target = e.patrol[nextIndex];
+        const dx = target.x - e.x;
+        const dist = Math.abs(dx);
+        if (dist < 2) {
+          e.patrolIndex = nextIndex;
+          e.setVelocityX(0);
+        } else {
+          const vx = Math.sign(dx) * e.speed;
+          e.setVelocityX(vx);
+          e.flipX = vx < 0;
+        }
       } else if (e.update) {
         e.update();
       }
