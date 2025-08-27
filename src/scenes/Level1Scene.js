@@ -20,9 +20,14 @@ export default class Level1Scene extends Phaser.Scene {
     Player.preload(this);
     Sockroach.preload(this);
     this.load.image('toast', 'src/assets/sprites/toast/toast_sprite.png');
+    this.load.image('lenny_face', 'src/assets/sprites/lenny/lenny_face.png');
 
     this.load.audio('bgm', 'src/assets/audio/Pixel Jump Groove.mp3');
     this.load.audio('toastCollect', 'src/assets/audio/toast-collect.mp3');
+    this.load.audio('hurt', 'src/assets/audio/Hurt.wav');
+    this.load.audio('landEnemy', 'src/assets/audio/LandOnEnemy.wav');
+    this.load.audio('death', 'src/assets/audio/game-over-38511.mp3');
+    this.load.audio('respawn', 'src/assets/audio/a_bulldog_respawning.mp3');
   }
 
   create() {
@@ -33,14 +38,14 @@ export default class Level1Scene extends Phaser.Scene {
       'tiles'
     );
 
-    map.createLayer('Sky', tiles, 0, 0);
-    map.createLayer('DecorBack', tiles, 0, 0);
-    const ground = map.createLayer('Ground', tiles, 0, 0);
+    map.createLayer('Sky', tiles, 0, 0).setDepth(-2);
+    map.createLayer('DecorBack', tiles, 0, 0).setDepth(-1);
+    const ground = map.createLayer('Ground', tiles, 0, 0).setDepth(0);
     const platforms =
       map.getLayerIndex('Platforms') !== -1
-        ? map.createLayer('Platforms', tiles, 0, 0)
+        ? map.createLayer('Platforms', tiles, 0, 0).setDepth(0)
         : null;
-    map.createLayer('DecorForground', tiles, 0, 0);
+    map.createLayer('DecorForground', tiles, 0, 0).setDepth(2);
 
     // Collision by tile property
     ground.setCollisionByProperty({ collision: true });
@@ -48,7 +53,7 @@ export default class Level1Scene extends Phaser.Scene {
 
     // --- Groups ---
     this.enemies = this.physics.add.group();
-    this.collectibles = this.physics.add.group();
+    this.collectibles = this.physics.add.group({ allowGravity: false, immovable: true });
 
     // --- Player spawn from Entities layer ---
     const entities = map.getObjectLayer('Entities');
@@ -71,10 +76,18 @@ export default class Level1Scene extends Phaser.Scene {
     Player.createAnimations(this);
     Sockroach.createAnimations(this);
     this.player = new Player(this, spawnX, spawnY);
+    this.spawnPoint = { x: spawnX, y: spawnY };
 
     // --- Colliders ---
     this.physics.add.collider(this.player, ground);
     if (platforms) this.physics.add.collider(this.player, platforms);
+    this.physics.add.collider(
+      this.player,
+      this.enemies,
+      this.handlePlayerEnemy,
+      null,
+      this
+    );
 
     // --- World & camera bounds ---
     const mapW = map.widthInPixels;
@@ -90,6 +103,10 @@ export default class Level1Scene extends Phaser.Scene {
     // --- Audio ---
     this.toastSound = this.sound.add('toastCollect');
     this.bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });
+    this.hurtSound = this.sound.add('hurt');
+    this.landEnemySound = this.sound.add('landEnemy');
+    this.deathSound = this.sound.add('death');
+    this.respawnSound = this.sound.add('respawn');
     this.bgm.play();
 
     // --- Parse Entities: enemies + collectibles ---
@@ -110,6 +127,42 @@ export default class Level1Scene extends Phaser.Scene {
         }
       });
     }
+
+    // --- UI ---
+    this.health = 3;
+    this.isDead = false;
+    this.isInvincible = false;
+    this.toastCount = 0;
+    this.createHealthIcons();
+    const toastSrc = this.textures.get('toast').getSourceImage();
+    const toastScale = (this.player.displayHeight / toastSrc.height) * 0.5;
+    const lastHealth = this.healthIcons[this.healthIcons.length - 1];
+    const toastX = lastHealth.x + lastHealth.displayWidth + 20;
+    const toastY = lastHealth.y;
+    this.toastIcon = this.add
+      .image(toastX, toastY, 'toast')
+      .setOrigin(0, 0)
+      .setScale(toastScale)
+      .setScrollFactor(0)
+      .setDepth(5);
+    this.toastText = this.add
+      .text(
+        this.toastIcon.x + this.toastIcon.displayWidth + 5,
+        this.toastIcon.y + this.toastIcon.displayHeight / 2,
+        `${this.toastCount}`,
+        {
+          font: 'bold 24px Courier',
+          fill: '#ffcc00'
+        }
+      )
+      .setOrigin(0, 0.5)
+      .setStroke('#000', 4)
+      .setScrollFactor(0)
+      .setDepth(5);
+    this.toastText.setShadow(2, 2, '#000', 2, true, true);
+
+    // --- Camera zoom ---
+    this.cameras.main.setZoom(1.4);
   }
 
   spawnEnemy(kind, x, y, props, map) {
@@ -135,11 +188,20 @@ export default class Level1Scene extends Phaser.Scene {
 
   spawnCollectible(kind, x, y, props) {
     const toast = this.collectibles.create(x, y, 'toast').setOrigin(0, 1);
+    const scale = (this.player.displayHeight / toast.height) * 0.5;
+    toast.setScale(scale);
     toast.value = Number(props.value ?? 1);
+    toast.bobTween = this.tweens.add({
+      targets: toast,
+      y: y - 10,
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
 
     this.physics.add.overlap(this.player, toast, () => {
-      toast.disableBody(true, true);
-      this.toastSound.play();
+      this.collectToast(toast);
     });
     return toast;
   }
@@ -160,6 +222,153 @@ export default class Level1Scene extends Phaser.Scene {
         e.flipX = e.body.velocity.x < 0;
       } else if (e.update) {
         e.update();
+      }
+    });
+  }
+
+  handlePlayerEnemy(playerObj, enemy) {
+    if (enemy.alive === false) return;
+
+    const playerBottom = playerObj.body.bottom;
+    const enemyTop = enemy.body.top;
+    const falling =
+      playerObj.body.velocity.y > 0 ||
+      playerObj.body.prev.y < playerObj.body.y;
+
+    if (falling && playerBottom <= enemyTop + 5) {
+      this.landEnemySound.play();
+      enemy.alive = false;
+      enemy.play('sockroach_stomp');
+      enemy.setVelocity(0, 0);
+      playerObj.setVelocityY(-300);
+      enemy.body.checkCollision.none = true;
+      enemy.setCollideWorldBounds(false);
+      enemy.once('animationcomplete-sockroach_stomp', () => {
+        enemy.setVelocityY(-200);
+        this.time.delayedCall(1000, () => enemy.destroy());
+      });
+    } else {
+      if (this.isInvincible) return;
+      this.hurtSound.play();
+      this.health -= 1;
+      this.removeHealthIcon();
+      this.isInvincible = true;
+      playerObj.setTint(0xff0000);
+      this.time.addEvent({
+        delay: 100,
+        repeat: 5,
+        callback: () => {
+          playerObj.visible = !playerObj.visible;
+        }
+      });
+      this.time.delayedCall(1000, () => {
+        this.isInvincible = false;
+        playerObj.clearTint();
+        playerObj.visible = true;
+      });
+      if (this.health <= 0) {
+        this.playerDie();
+      }
+    }
+  }
+
+  collectToast(toast) {
+    toast.bobTween.stop();
+    toast.body.enable = false;
+    this.tweens.add({
+      targets: toast,
+      scale: toast.scale * 1.5,
+      alpha: 0,
+      duration: 300,
+      onComplete: () => toast.destroy()
+    });
+    this.toastSound.play();
+    this.toastCount += toast.value;
+    this.toastText.setText(`${this.toastCount}`);
+    this.tweens.add({
+      targets: this.toastText,
+      scale: { from: 1.3, to: 1 },
+      duration: 200,
+      ease: 'Cubic.easeOut'
+    });
+  }
+
+  createHealthIcons() {
+    const srcImage = this.textures.get('lenny_face').getSourceImage();
+    const scale = (this.player.displayHeight / srcImage.height) * 0.5;
+    this.healthIcons = [];
+    for (let i = 0; i < this.health; i++) {
+      const x = 10 + i * (srcImage.width * scale + 5);
+      const icon = this.add
+        .image(x, 30, 'lenny_face')
+        .setOrigin(0, 0)
+        .setScale(scale)
+        .setScrollFactor(0)
+        .setDepth(5);
+      this.healthIcons.push(icon);
+    }
+  }
+
+  removeHealthIcon() {
+    const icon = this.healthIcons.pop();
+    if (!icon) return;
+    this.tweens.add({
+      targets: icon,
+      y: icon.y - 20,
+      angle: 360,
+      scale: 0,
+      alpha: 0,
+      duration: 500,
+      ease: 'Cubic.easeIn',
+      onComplete: () => icon.destroy()
+    });
+  }
+
+  resetHealthIcons() {
+    if (this.healthIcons) {
+      this.healthIcons.forEach(icon => icon.destroy());
+    }
+    this.createHealthIcons();
+  }
+
+  playerDie() {
+    if (this.isDead) return;
+    this.isDead = true;
+    this.bgm.stop();
+    this.deathSound.play();
+    this.player.setVelocity(0, 0);
+    this.player.anims.stop();
+    this.player.setTexture('lenny_idle');
+
+    this.tweens.add({
+      targets: this.player,
+      alpha: 0,
+      angle: 180,
+      duration: 4000,
+      onComplete: () => {
+        this.player.setAngle(0);
+        this.player.setPosition(this.spawnPoint.x, this.spawnPoint.y);
+        this.player.jumpCount = 0;
+        this.health = 3;
+        this.resetHealthIcons();
+        this.respawnSound.play();
+        this.respawnSound.once('complete', () => {
+          this.bgm.setVolume(0);
+          this.bgm.play();
+          this.tweens.add({
+            targets: this.bgm,
+            volume: 0.5,
+            duration: 1000
+          });
+        });
+        this.tweens.add({
+          targets: this.player,
+          alpha: 1,
+          duration: 500,
+          onComplete: () => {
+            this.isDead = false;
+          }
+        });
       }
     });
   }

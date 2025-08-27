@@ -42,6 +42,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
+    this.setOrigin(0.5, 1);
     this.setCollideWorldBounds(true);
     this.setDepth(1);
     // Trim transparent bounds so Lenny's feet sit flush with the ground
