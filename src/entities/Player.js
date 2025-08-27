@@ -49,7 +49,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(1);
     // Trim transparent bounds so Lenny's feet sit flush with the ground
     this.body.setSize(48 * scale, 45 * scale);
-    this.body.setOffset(10 * scale, 6 * scale);
+    this.body.setOffset(10 * scale, 18 * scale);
 
     this.cursors = scene.input.keyboard.createCursorKeys();
     this.jumpSound = scene.sound.add('jump');
