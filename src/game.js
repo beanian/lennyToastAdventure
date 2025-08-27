@@ -7,8 +7,7 @@ const config = {
   type: Phaser.AUTO,
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
-  // If you designed the map for a chunkier look, enable zoom: 2
-  // zoom: 2,
+  // Camera zoom is managed in Level1Scene after the map loads
   physics: {
     default: 'arcade',
     arcade: { gravity: { y: 700 } }

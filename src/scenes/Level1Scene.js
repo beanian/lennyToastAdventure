@@ -93,10 +93,10 @@ export default class Level1Scene extends Phaser.Scene {
     // --- World & camera bounds ---
     const mapW = map.widthInPixels;
     const mapH = map.heightInPixels;
-    const worldW = Math.max(mapW, GAME_WIDTH);
-    const worldH = Math.max(mapH, GAME_HEIGHT);
-    this.cameras.main.setBounds(0, 0, worldW, worldH);
-    this.physics.world.setBounds(0, 0, worldW, worldH);
+    const zoom = GAME_WIDTH / mapW;
+    this.cameras.main.setZoom(zoom);
+    this.cameras.main.setBounds(0, 0, mapW, mapH);
+    this.physics.world.setBounds(0, 0, mapW, mapH);
     this.cameras.main.setSize(GAME_WIDTH, GAME_HEIGHT);
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
 
