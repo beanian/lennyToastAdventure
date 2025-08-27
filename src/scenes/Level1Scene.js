@@ -47,9 +47,9 @@ export default class Level1Scene extends Phaser.Scene {
         : null;
     map.createLayer('DecorForground', tiles, 0, 0).setDepth(2);
 
-    // Collision by tile property
-    ground.setCollisionByProperty({ collision: true });
-    if (platforms) platforms.setCollisionByProperty({ collision: true });
+    // Make all non-empty tiles in ground and platforms collidable
+    ground.setCollisionByExclusion([-1]);
+    if (platforms) platforms.setCollisionByExclusion([-1]);
 
     // --- Groups ---
     this.enemies = this.physics.add.group();
