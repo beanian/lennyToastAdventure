@@ -40,38 +40,52 @@ export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
-  constructor(scene, x, y, playerHeight) {
-    super(scene, x, y, 'sockroach_walk_1');
-    scene.add.existing(this);
-    scene.physics.add.existing(this);
+    constructor(scene, x, y, playerHeight) {
+      super(scene, x, y, 'sockroach_walk_1');
+      scene.add.existing(this);
+      scene.physics.add.existing(this);
 
-    const scale = playerHeight / this.height;
-    this.setScale(scale * 0.6);
-    const bodyWidth = this.displayWidth * 0.9;
-    const bodyHeight = this.displayHeight * 0.9;
-    this.body.setSize(bodyWidth, bodyHeight);
-    this.body.setOffset(
-      (this.displayWidth - bodyWidth) / 2,
-      (this.displayHeight - bodyHeight) + 22
-    );
+      const scale = playerHeight / this.height;
+      this.setScale(scale * 0.6);
+      const bodyWidth = this.displayWidth * 0.9;
+      const bodyHeight = this.displayHeight * 0.9;
+      this.body.setSize(bodyWidth, bodyHeight);
+      this.body.setOffset(
+        (this.displayWidth - bodyWidth) / 2,
+        (this.displayHeight - bodyHeight) + 22
+      );
 
-    this.setCollideWorldBounds(true);
-    this.setDepth(1);
-    this.patrolLeft = x - 50;
-    this.patrolRight = x + 50;
-    this.speed = 60;
-    // Move left initially so patrol starts by going towards the left bound
-    this.setVelocityX(-this.speed);
-    this.alive = true;
-  }
-
-  update() {
-    if (!this.alive) return;
-    if (this.x <= this.patrolLeft) {
-      this.setVelocityX(this.speed);
-    } else if (this.x >= this.patrolRight) {
+      this.setCollideWorldBounds(true);
+      this.setDepth(1);
+      this.patrolLeft = x - 50;
+      this.patrolRight = x + 50;
+      this.speed = 60;
+      // Move left initially so patrol starts by going towards the left bound
       this.setVelocityX(-this.speed);
+      this.alive = true;
     }
-    this.flipX = this.body.velocity.x < 0;
+
+    update(delta = 0, timeScale = 1) {
+      if (!this.alive) return;
+
+      // Predict next position using delta and timeScale to avoid overshoot
+      const dt = (delta / 1000) * timeScale;
+      const nextX = this.x + this.body.velocity.x * dt;
+      if (this.body.velocity.x < 0 && nextX <= this.patrolLeft) {
+        this.x = this.patrolLeft;
+        this.setVelocityX(this.speed * timeScale);
+      } else if (this.body.velocity.x > 0 && nextX >= this.patrolRight) {
+        this.x = this.patrolRight;
+        this.setVelocityX(-this.speed * timeScale);
+      }
+
+      // Clamp horizontal velocity so physics remains deterministic
+      this.body.velocity.x = Phaser.Math.Clamp(
+        this.body.velocity.x,
+        -this.speed * timeScale,
+        this.speed * timeScale
+      );
+
+      this.flipX = this.body.velocity.x < 0;
+    }
   }
-}

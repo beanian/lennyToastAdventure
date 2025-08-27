@@ -219,21 +219,27 @@ export default class Level1Scene extends Phaser.Scene {
     return toast;
   }
 
-  update() {
-    this.player.update();
+  update(time, delta) {
+    const ts = this.physics.world.timeScale || 1;
+    this.player.update(delta, ts);
     this.enemies.children.iterate(e => {
       if (!e) return;
       if (e.patrol && e.patrol.length >= 2) {
-       const tgtX = e.patrol[e.patrolIndex];
+        const tgtX = e.patrol[e.patrolIndex];
         const dx = tgtX - e.x;
         const dir = Math.sign(dx);
-        e.setVelocityX(dir * e.speed);
+        e.setVelocityX(dir * e.speed * ts);
         if (Math.abs(dx) < 3) {
           e.patrolIndex = (e.patrolIndex + 1) % e.patrol.length;
         }
         e.flipX = e.body.velocity.x < 0;
+        e.body.velocity.x = Phaser.Math.Clamp(
+          e.body.velocity.x,
+          -e.speed * ts,
+          e.speed * ts
+        );
       } else if (e.update) {
-        e.update();
+        e.update(delta, ts);
       }
     });
   }
