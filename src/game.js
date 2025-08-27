@@ -6,6 +6,7 @@ document.title = `Lenny Toast Adventure ${VERSION}`;
 const config = {
   type: Phaser.AUTO,
   width: GAME_WIDTH,
+  pixelArt: true,
   height: GAME_HEIGHT,
   // Camera zoom is managed in Level1Scene after the map loads
   physics: {
