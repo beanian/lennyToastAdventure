@@ -151,7 +151,8 @@ export default class Level1Scene extends Phaser.Scene {
       .image(toastX, toastY, 'toast')
       .setOrigin(0, 0)
       .setScale(toastScale)
-      .setDepth(10);
+      .setDepth(10)
+      .setScrollFactor(0);
     this.ui.add(this.toastIcon);
 
     this.toastText = this.add
@@ -166,7 +167,8 @@ export default class Level1Scene extends Phaser.Scene {
       )
       .setOrigin(0, 0.5)
       .setStroke('#000', 4)
-      .setDepth(10);
+      .setDepth(10)
+      .setScrollFactor(0);
     this.toastText.setShadow(2, 2, '#000', 2, true, true);
     this.ui.add(this.toastText);
   }
@@ -307,7 +309,8 @@ export default class Level1Scene extends Phaser.Scene {
         .image(x, 30, 'lenny_face')
         .setOrigin(0, 0)
         .setScale(scale)
-        .setDepth(10);
+        .setDepth(10)
+        .setScrollFactor(0);
       this.ui.add(icon);
       this.healthIcons.push(icon);
     }
