@@ -48,9 +48,16 @@ export default class Level1Scene extends Phaser.Scene {
         : null;
     map.createLayer('DecorForground', tiles, 0, 0).setDepth(2);
 
-    // Make tiles with the `collides` property true collidable
-    ground.setCollisionByProperty({ collides: true });
-    if (platforms) platforms.setCollisionByProperty({ collides: true });
+    // Enable collision for any layer marked with a `collision` property
+    const enableCollision = layer => {
+      const props = layer.layer.properties || [];
+      const collides = props.some(p => p.name === 'collision' && p.value === true);
+      if (collides) {
+        layer.setCollisionByExclusion(-1);
+      }
+    };
+    enableCollision(ground);
+    if (platforms) enableCollision(platforms);
 
     // --- Groups ---
     this.enemies = this.physics.add.group();
