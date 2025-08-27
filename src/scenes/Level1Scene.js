@@ -175,10 +175,7 @@ export default class Level1Scene extends Phaser.Scene {
       const paths = map.getObjectLayer('Paths');
       const pathObj = paths?.objects.find(o => o.name === props.pathName);
       if (pathObj?.polyline) {
-        enemy.patrol = pathObj.polyline.map(p => ({
-          x: pathObj.x + p.x,
-          y: pathObj.y + p.y
-        }));
+        enemy.patrol = pathObj.polyline.map(p => pathObj.x + p.x);
         enemy.patrolIndex = 0;
       }
     }
@@ -189,7 +186,7 @@ export default class Level1Scene extends Phaser.Scene {
 
   spawnCollectible(kind, x, y, props) {
     const toast = this.collectibles.create(x, y, 'toast').setOrigin(0, 1);
-    const scale = (this.player.displayHeight / toast.height) * 0.5;
+    const scale = (this.player.displayHeight / toast.height) * 0.35;
     toast.setScale(scale);
     toast.value = Number(props.value ?? 1);
     toast.bobTween = this.tweens.add({
@@ -212,12 +209,11 @@ export default class Level1Scene extends Phaser.Scene {
     this.enemies.children.iterate(e => {
       if (!e) return;
       if (e.patrol && e.patrol.length >= 2) {
-        const tgt = e.patrol[e.patrolIndex];
-        const dx = tgt.x - e.x;
-        const dy = tgt.y - e.y;
-        const len = Math.max(1, Math.hypot(dx, dy));
-        e.setVelocity((dx / len) * e.speed, (dy / len) * e.speed);
-        if (Math.hypot(e.x - tgt.x, e.y - tgt.y) < 3) {
+       const tgtX = e.patrol[e.patrolIndex];
+        const dx = tgtX - e.x;
+        const dir = Math.sign(dx);
+        e.setVelocityX(dir * e.speed);
+        if (Math.abs(dx) < 3) {
           e.patrolIndex = (e.patrolIndex + 1) % e.patrol.length;
         }
         e.flipX = e.body.velocity.x < 0;

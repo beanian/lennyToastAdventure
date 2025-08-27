@@ -46,13 +46,13 @@ export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
     scene.physics.add.existing(this);
 
     const scale = playerHeight / this.height;
-    this.setScale(scale*0.6);
+    this.setScale(scale *0.6);
     const bodyWidth = this.displayWidth * 0.9;
     const bodyHeight = this.displayHeight * 0.9;
     this.body.setSize(bodyWidth, bodyHeight);
     this.body.setOffset(
       (this.displayWidth - bodyWidth) / 2,
-      (this.displayHeight - bodyHeight) - 10
+      (this.displayHeight - bodyHeight) + 22
     );
 
     this.setFlipX(true);

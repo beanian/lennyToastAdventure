@@ -306,7 +306,7 @@
                 {
                  "height":0,
                  "id":2,
-                 "name":"Enemy_1",
+                 "name":"Enemy_2",
                  "point":true,
                  "properties":[
                         {
@@ -317,7 +317,7 @@
                         {
                          "name":"pathName",
                          "type":"string",
-                         "value":"patrol_1"
+                         "value":"patrol_2"
                         }, 
                         {
                          "name":"speed",
@@ -333,8 +333,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":374.666666666667,
-                 "y":557.333333333333
+                 "x":593,
+                 "y":480
                 }, 
                 {
                  "height":0,
@@ -363,6 +363,39 @@
                  "width":0,
                  "x":198.666666666667,
                  "y":492
+                }, 
+                {
+                 "height":0,
+                 "id":6,
+                 "name":"Enemy_1",
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"kind",
+                         "type":"string",
+                         "value":"sockroach"
+                        }, 
+                        {
+                         "name":"pathName",
+                         "type":"string",
+                         "value":"patrol_1"
+                        }, 
+                        {
+                         "name":"speed",
+                         "type":"int",
+                         "value":60
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"enemy"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":382,
+                 "y":565
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -376,19 +409,8 @@
          "name":"Paths",
          "objects":[
                 {
-                 "height":0.666666666666664,
-                 "id":4,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":319.333333333333,
-                 "y":-47.3333333333333
-                }, 
-                {
                  "height":0,
-                 "id":5,
+                 "id":7,
                  "name":"patrol_1",
                  "polyline":[
                         {
@@ -396,15 +418,35 @@
                          "y":0
                         }, 
                         {
-                         "x":182.666666666667,
-                         "y":-1.33333333333337
+                         "x":182.667,
+                         "y":-1.33333
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":268,
-                 "y":535.666666666667
+                 "x":272,
+                 "y":539.5
+                }, 
+                {
+                 "height":0,
+                 "id":9,
+                 "name":"patrol_2",
+                 "polyline":[
+                        {
+                         "x":0,
+                         "y":0
+                        }, 
+                        {
+                         "x":142,
+                         "y":-0.666666666666686
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":522.666666666667,
+                 "y":486
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -413,7 +455,7 @@
          "y":0
         }],
  "nextlayerid":8,
- "nextobjectid":6,
+ "nextobjectid":10,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",
