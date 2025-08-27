@@ -37,7 +37,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
-  constructor(scene, x, y) {
+  constructor(scene, x, y, inputService) {
     super(scene, x, y, 'lenny_idle');
     scene.add.existing(this);
     scene.physics.add.existing(this);
@@ -51,7 +51,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.body.setSize(48 * scale, 45 * scale);
     this.body.setOffset(10 * scale, 18 * scale);
 
-    this.cursors = scene.input.keyboard.createCursorKeys();
+    this.input = inputService;
     this.jumpSound = scene.sound.add('jump');
     this.jumpCount = 0;
   }
@@ -60,11 +60,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const onGround = this.body.blocked.down;
     if (onGround) this.jumpCount = 0;
 
-    if (this.cursors.left.isDown) {
+    if (this.input.left()) {
       this.setVelocityX(-160);
       this.setFlipX(true);
       if (onGround) this.play('walk', true);
-    } else if (this.cursors.right.isDown) {
+    } else if (this.input.right()) {
       this.setVelocityX(160);
       this.setFlipX(false);
       if (onGround) this.play('walk', true);
@@ -73,7 +73,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       if (onGround) this.play('idle', true);
     }
 
-    const jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up);
+    const jumpPressed = this.input.jumpJustPressed();
     if (jumpPressed && (onGround || this.jumpCount < 2)) {
       this.setVelocityY(-450);
       this.jumpSound.play();
