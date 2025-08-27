@@ -1,3 +1,4 @@
+/* global Phaser */
 export default class InputService {
   constructor(scene) {
     this.scene = scene;
@@ -6,10 +7,12 @@ export default class InputService {
     this.mobile = { left: false, right: false, jump: false };
     this.mobilePrevJump = false;
 
-    // Listen for gamepad connection
-    scene.input.gamepad.once('connected', pad => {
-      this.gamepad = pad;
-    });
+    // Listen for gamepad connection if plugin is available
+    if (scene.input.gamepad) {
+      scene.input.gamepad.once('connected', pad => {
+        this.gamepad = pad;
+      });
+    }
   }
 
   setMobileInput(direction, isActive) {
