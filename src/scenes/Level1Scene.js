@@ -160,9 +160,6 @@ export default class Level1Scene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(5);
     this.toastText.setShadow(2, 2, '#000', 2, true, true);
-
-    // --- Camera zoom ---
-    this.cameras.main.setZoom(1.4);
   }
 
   spawnEnemy(kind, x, y, props, map) {
