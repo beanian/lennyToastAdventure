@@ -143,7 +143,7 @@ export default class Level1Scene extends Phaser.Scene {
     this.createHealthIcons();
 
     const toastSrc = this.textures.get('toast').getSourceImage();
-    const toastScale = (this.player.displayHeight / toastSrc.height) * 0.5;
+    const toastScale = (this.player.displayHeight / toastSrc.height) * 1;
     const lastHealth = this.healthIcons[this.healthIcons.length - 1];
     const toastX = lastHealth.x + lastHealth.displayWidth + 20;
     const toastY = lastHealth.y;
@@ -161,7 +161,7 @@ export default class Level1Scene extends Phaser.Scene {
         this.toastIcon.y + this.toastIcon.displayHeight / 2,
         `${this.toastCount}`,
         {
-          font: 'bold 24px Courier',
+          font: 'bold 48px Courier',
           fill: '#ffcc00'
         }
       )
@@ -308,7 +308,7 @@ export default class Level1Scene extends Phaser.Scene {
 
   createHealthIcons() {
     const srcImage = this.textures.get('lenny_face').getSourceImage();
-    const scale = (this.player.displayHeight / srcImage.height) * 0.5;
+    const scale = (this.player.displayHeight / srcImage.height) * 1;
     this.healthIcons = [];
     for (let i = 0; i < this.health; i++) {
       const x = 10 + i * (srcImage.width * scale + 5);
