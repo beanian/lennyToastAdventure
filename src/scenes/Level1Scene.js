@@ -48,9 +48,9 @@ export default class Level1Scene extends Phaser.Scene {
         : null;
     map.createLayer('DecorForground', tiles, 0, 0).setDepth(2);
 
-    // Make all non-empty tiles in ground and platforms collidable
-    ground.setCollisionByExclusion([-1]);
-    if (platforms) platforms.setCollisionByExclusion([-1]);
+    // Make tiles with the `collides` property true collidable
+    ground.setCollisionByProperty({ collides: true });
+    if (platforms) platforms.setCollisionByProperty({ collides: true });
 
     // --- Groups ---
     this.enemies = this.physics.add.group();
@@ -203,6 +203,10 @@ export default class Level1Scene extends Phaser.Scene {
     const toast = this.collectibles.create(x, y, 'toast').setOrigin(0, 1);
     const scale = (this.player.displayHeight / toast.height) * 0.35;
     toast.setScale(scale);
+    // Ensure the physics body matches the visual size and remains static
+    toast.body.setSize(toast.width * scale, toast.height * scale);
+    toast.body.setOffset(0, toast.height * (1 - scale));
+    toast.setImmovable(true);
     toast.value = Number(props.value ?? 1);
     toast.bobTween = this.tweens.add({
       targets: toast,
