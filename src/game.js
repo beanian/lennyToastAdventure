@@ -1,12 +1,12 @@
-import { VERSION } from './constants.js';
+import { VERSION, GAME_WIDTH, GAME_HEIGHT } from './constants.js';
 import Level1Scene from './scenes/Level1Scene.js';
 
 document.title = `Lenny Toast Adventure ${VERSION}`;
 
 const config = {
   type: Phaser.AUTO,
-  width: 1920,
-  height: 1080,
+  width: GAME_WIDTH,
+  height: GAME_HEIGHT,
   // If you designed the map for a chunkier look, enable zoom: 2
   // zoom: 2,
   physics: {

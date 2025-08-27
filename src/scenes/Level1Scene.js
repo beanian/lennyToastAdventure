@@ -1,6 +1,7 @@
 /* global Phaser */
 import Player from '../entities/Player.js';
 import Sockroach from '../entities/Sockroach.js';
+import { GAME_WIDTH, GAME_HEIGHT } from '../constants.js';
 
 export default class Level1Scene extends Phaser.Scene {
   constructor() {
@@ -92,8 +93,11 @@ export default class Level1Scene extends Phaser.Scene {
     // --- World & camera bounds ---
     const mapW = map.widthInPixels;
     const mapH = map.heightInPixels;
-    this.cameras.main.setBounds(0, 0, mapW, mapH);
-    this.physics.world.setBounds(0, 0, mapW, mapH);
+    const worldW = Math.max(mapW, GAME_WIDTH);
+    const worldH = Math.max(mapH, GAME_HEIGHT);
+    this.cameras.main.setBounds(0, 0, worldW, worldH);
+    this.physics.world.setBounds(0, 0, worldW, worldH);
+    this.cameras.main.setSize(GAME_WIDTH, GAME_HEIGHT);
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
 
     // --- Enemy vs ground/platforms ---
