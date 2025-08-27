@@ -161,7 +161,7 @@ export default class Level1Scene extends Phaser.Scene {
         this.toastIcon.y + this.toastIcon.displayHeight / 2,
         `${this.toastCount}`,
         {
-          font: 'bold 48px Courier',
+          font: 'bold 32px Courier',
           fill: '#ffcc00'
         }
       )
@@ -169,7 +169,6 @@ export default class Level1Scene extends Phaser.Scene {
       .setStroke('#000', 4)
       .setDepth(10)
       .setScrollFactor(0);
-    this.toastText.setShadow(2, 2, '#000', 2, true, true);
     this.ui.add(this.toastText);
 
     // Render UI elements with a dedicated camera so they're
