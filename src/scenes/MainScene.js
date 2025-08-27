@@ -5,7 +5,7 @@ import Sockroach from '../entities/Sockroach.js';
 export default class MainScene extends Phaser.Scene {
   constructor() {
     super('MainScene');
-    this.spawnPoint = { x: 100, y: 450 };
+    this.spawnPoint = { x: 0, y: 0 };
   }
 
   preload() {
@@ -19,33 +19,53 @@ export default class MainScene extends Phaser.Scene {
     this.load.audio('hurt', 'src/assets/audio/Hurt.wav');
     this.load.audio('landEnemy', 'src/assets/audio/LandOnEnemy.wav');
     this.load.audio('toastCollect', 'src/assets/audio/toast-collect.mp3');
+    this.load.image('tiles', 'src/assets/tileset_placeholder.png');
+    this.load.tilemapTiledJSON('level', 'src/tilemaps/lennyTest.tmj');
   }
 
   create() {
     Player.createAnimations(this);
     Sockroach.createAnimations(this);
 
+    const map = this.make.tilemap({ key: 'level' });
+    const tileset = map.addTilesetImage(
+      'nature-paltformer-tileset-16x16',
+      'tiles'
+    );
+
+    this.collisionLayers = [];
+    map.layers.forEach(layerData => {
+      if (layerData.type !== 'tilelayer') return;
+      const layer = map.createLayer(layerData.name, tileset, 0, 0);
+      if (
+        layerData.properties &&
+        layerData.properties.find(p => p.name === 'collision' && p.value === true)
+      ) {
+        layer.setCollisionByExclusion([-1]);
+        this.collisionLayers.push(layer);
+      }
+    });
+
+    const objectLayer = map.getObjectLayer('Entities');
+    const enemySpawns = [];
+    const toastSpawns = [];
+    objectLayer.objects.forEach(obj => {
+      const props = Object.fromEntries(
+        (obj.properties || []).map(p => [p.name, p.value])
+      );
+      if (props.type === 'spawn' && props.kind === 'player') {
+        this.spawnPoint = { x: obj.x, y: obj.y };
+      } else if (props.type === 'enemy' && props.kind === 'sockroach') {
+        enemySpawns.push({ x: obj.x, y: obj.y });
+      } else if (props.type === 'collectible' && props.kind === 'toast') {
+        toastSpawns.push({ x: obj.x, y: obj.y });
+      }
+    });
+
     this.player = new Player(this, this.spawnPoint.x, this.spawnPoint.y);
 
-    const ground = this.add.rectangle(400, 580, 800, 40, 0x8b4513);
-    ground.setDepth(-1);
-    this.physics.add.existing(ground, true);
-
-    const platform = this.add.rectangle(400, 400, 200, 20, 0x8b4513);
-    platform.setDepth(-1);
-    this.physics.add.existing(platform, true);
-
-    const killBlock = this.add.rectangle(600, 540, 40, 40, 0xff0000);
-    killBlock.setDepth(-1);
-    this.physics.add.existing(killBlock, true);
-
     this.toasts = this.physics.add.group({ allowGravity: false, immovable: true });
-    const toastPositions = [
-      { x: 200, y: 520 },
-      { x: 450, y: 360 },
-      { x: 650, y: 520 }
-    ];
-    toastPositions.forEach(pos => {
+    toastSpawns.forEach(pos => {
       const toast = this.toasts.create(pos.x, pos.y, 'toast');
       const toastScale = (this.player.displayHeight / toast.height) * 0.5;
       toast.setScale(toastScale);
@@ -59,14 +79,36 @@ export default class MainScene extends Phaser.Scene {
       });
     });
 
-    this.sockroach = new Sockroach(this, 300, 528, this.player.displayHeight);
-    this.sockroachCollider = this.physics.add.collider(this.sockroach, ground);
+    if (enemySpawns.length > 0) {
+      const pos = enemySpawns[0];
+      this.sockroach = new Sockroach(
+        this,
+        pos.x,
+        pos.y,
+        this.player.displayHeight
+      );
+      this.sockroachColliders = this.collisionLayers.map(layer =>
+        this.physics.add.collider(this.sockroach, layer)
+      );
+      this.physics.add.collider(
+        this.player,
+        this.sockroach,
+        this.handlePlayerEnemy,
+        null,
+        this
+      );
+    }
 
-    this.physics.add.collider(this.player, ground);
-    this.physics.add.collider(this.player, platform);
-    this.physics.add.collider(this.player, this.sockroach, this.handlePlayerEnemy, null, this);
-    this.physics.add.overlap(this.player, killBlock, this.playerDie, null, this);
-    this.physics.add.overlap(this.player, this.toasts, this.collectToast, null, this);
+    this.collisionLayers.forEach(layer =>
+      this.physics.add.collider(this.player, layer)
+    );
+    this.physics.add.overlap(
+      this.player,
+      this.toasts,
+      this.collectToast,
+      null,
+      this
+    );
 
     this.deathSound = this.sound.add('death');
     this.respawnSound = this.sound.add('respawn');
@@ -166,7 +208,9 @@ export default class MainScene extends Phaser.Scene {
       enemy.play('sockroach_stomp');
       enemy.setVelocity(0, 0);
       playerObj.setVelocityY(-300);
-      this.sockroachCollider.destroy();
+      if (this.sockroachColliders) {
+        this.sockroachColliders.forEach(c => c.destroy());
+      }
       enemy.body.checkCollision.none = true;
       enemy.setCollideWorldBounds(false);
       enemy.once('animationcomplete-sockroach_stomp', () => {
