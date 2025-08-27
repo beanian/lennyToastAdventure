@@ -2,33 +2,11 @@
 import Player from '../entities/Player.js';
 import Sockroach from '../entities/Sockroach.js';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants.js';
+import InputService from '../services/InputService.js';
 
 export default class Level1Scene extends Phaser.Scene {
   constructor() {
     super('Level1');
-  }
-
-  preload() {
-    this.load.tilemapTiledJSON(
-      'level1',
-      'src/levels/level1/lennyTest.tmj'
-    );
-    this.load.image(
-      'tiles',
-      'src/levels/level1/nature-paltformer-tileset-16x16.png'
-    );
-
-    Player.preload(this);
-    Sockroach.preload(this);
-    this.load.image('toast', 'src/assets/sprites/toast/toast_sprite.png');
-    this.load.image('lenny_face', 'src/assets/sprites/lenny/lenny_face.png');
-
-    this.load.audio('bgm', 'src/assets/audio/Pixel Jump Groove.mp3');
-    this.load.audio('toastCollect', 'src/assets/audio/toast-collect.mp3');
-    this.load.audio('hurt', 'src/assets/audio/Hurt.wav');
-    this.load.audio('landEnemy', 'src/assets/audio/LandOnEnemy.wav');
-    this.load.audio('death', 'src/assets/audio/game-over-38511.mp3');
-    this.load.audio('respawn', 'src/assets/audio/a_bulldog_respawning.mp3');
   }
 
   create() {
@@ -48,9 +26,16 @@ export default class Level1Scene extends Phaser.Scene {
         : null;
     map.createLayer('DecorForground', tiles, 0, 0).setDepth(2);
 
-    // Make all non-empty tiles in ground and platforms collidable
-    ground.setCollisionByExclusion([-1]);
-    if (platforms) platforms.setCollisionByExclusion([-1]);
+    // Enable collision for any layer marked with a `collision` property
+    const enableCollision = layer => {
+      const props = layer.layer.properties || [];
+      const collides = props.some(p => p.name === 'collision' && p.value === true);
+      if (collides) {
+        layer.setCollisionByExclusion(-1);
+      }
+    };
+    enableCollision(ground);
+    if (platforms) enableCollision(platforms);
 
     // --- Groups ---
     this.enemies = this.physics.add.group();
@@ -76,7 +61,8 @@ export default class Level1Scene extends Phaser.Scene {
 
     Player.createAnimations(this);
     Sockroach.createAnimations(this);
-    this.player = new Player(this, spawnX, spawnY);
+    this.inputService = new InputService(this);
+    this.player = new Player(this, spawnX, spawnY, this.inputService);
     this.spawnPoint = { x: spawnX, y: spawnY };
 
     // --- Colliders ---
@@ -94,11 +80,12 @@ export default class Level1Scene extends Phaser.Scene {
     const mapW = map.widthInPixels;
     const mapH = map.heightInPixels;
     const zoom = GAME_WIDTH / mapW;
-    this.cameras.main.setZoom(zoom);
-    this.cameras.main.setBounds(0, 0, mapW, mapH);
+    const cam = this.cameras.main;
+    cam.setZoom(zoom);
+    cam.setBounds(0, 0, mapW, mapH);
     this.physics.world.setBounds(0, 0, mapW, mapH);
-    this.cameras.main.setSize(GAME_WIDTH, GAME_HEIGHT);
-    this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+    cam.setSize(GAME_WIDTH, GAME_HEIGHT);
+    cam.startFollow(this.player, true, 0.08, 0.08);
 
     // --- Enemy vs ground/platforms ---
     this.physics.add.collider(this.enemies, ground);
@@ -173,26 +160,40 @@ export default class Level1Scene extends Phaser.Scene {
 
     // Render UI elements with a dedicated camera so they're
     // unaffected by the main camera's scrolling and zoom
-    this.cameras.main.ignore(this.ui);
-    this.uiCamera = this.cameras.add(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    this.uiCamera.setScroll(0, 0);
-    this.uiCamera.ignore(this.children.list.filter(obj => obj !== this.ui));
+    cam.ignore(this.ui);
+    this.uiCam = this.cameras
+      .add(0, 0, GAME_WIDTH, GAME_HEIGHT, true)
+      .setScroll(0, 0);
+    this.uiCam.ignore(this.children.list.filter(obj => obj !== this.ui));
   }
 
   spawnEnemy(kind, x, y, props, map) {
     const enemy = new Sockroach(this, x, y, this.player.displayHeight);
     enemy.play('sockroach_walk');
     enemy.speed = Number(props.speed ?? 60);
-    // Start moving left by default
-    enemy.setVelocityX(-enemy.speed);
 
+    // Default movement is left/right unless a patrol path is provided
     if (props.pathName) {
       const paths = map.getObjectLayer('Paths');
       const pathObj = paths?.objects.find(o => o.name === props.pathName);
       if (pathObj?.polyline) {
-        enemy.patrol = pathObj.polyline.map(p => pathObj.x + p.x);
+        // Normalize polyline points to world space once, ignoring Y so enemy stays grounded
+        const baseY = enemy.y;
+        const pts = pathObj.polyline.map(p => ({
+          x: pathObj.x + p.x,
+          y: baseY
+        }));
+        // Ensure patrol moves monotonically from left to right
+        pts.sort((a, b) => a.x - b.x);
+        enemy.patrol = pts;
         enemy.patrolIndex = 0;
+        enemy.patrolDir = 1;
+        // Start stationary; update loop will drive movement
+        enemy.setVelocity(0, 0);
       }
+    } else {
+      // Start moving left by default when no path is supplied
+      enemy.setVelocityX(-enemy.speed);
     }
 
     this.enemies.add(enemy);
@@ -203,6 +204,10 @@ export default class Level1Scene extends Phaser.Scene {
     const toast = this.collectibles.create(x, y, 'toast').setOrigin(0, 1);
     const scale = (this.player.displayHeight / toast.height) * 0.35;
     toast.setScale(scale);
+    // Ensure the physics body matches the visual size and remains static
+    toast.body.setSize(toast.width * scale, toast.height * scale);
+    toast.body.setOffset(0, toast.height * (1 - scale));
+    toast.setImmovable(true);
     toast.value = Number(props.value ?? 1);
     toast.bobTween = this.tweens.add({
       targets: toast,
@@ -223,7 +228,7 @@ export default class Level1Scene extends Phaser.Scene {
     const ts = this.physics.world.timeScale || 1;
     this.player.update(delta, ts);
     this.enemies.children.iterate(e => {
-      if (!e) return;
+      if (!e || e.alive === false) return;
       if (e.patrol && e.patrol.length >= 2) {
         const tgtX = e.patrol[e.patrolIndex];
         const dx = tgtX - e.x;

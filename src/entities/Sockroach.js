@@ -1,19 +1,4 @@
 export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
-  static preload(scene) {
-    for (let i = 1; i <= 6; i++) {
-      scene.load.image(
-        `sockroach_walk_${i}`,
-        `src/assets/sprites/sockroach/sockroach_walk_${i}.png`
-      );
-    }
-    for (let i = 1; i <= 2; i++) {
-      scene.load.image(
-        `sockroach_stomp_${i}`,
-        `src/assets/sprites/sockroach/sockroach_stomp_${i}.png`
-      );
-    }
-  }
-
   static createAnimations(scene) {
     scene.anims.create({
       key: 'sockroach_walk',

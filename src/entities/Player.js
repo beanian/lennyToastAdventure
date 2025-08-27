@@ -1,17 +1,4 @@
 export default class Player extends Phaser.Physics.Arcade.Sprite {
-  static preload(scene) {
-    scene.load.image('lenny_idle', 'src/assets/sprites/lenny/grey_idle.PNG');
-    scene.load.image('lenny_jump_1', 'src/assets/sprites/lenny/grey_jump_1.PNG');
-    scene.load.image('lenny_jump_2', 'src/assets/sprites/lenny/grey_jump_2.PNG');
-    for (let i = 1; i <= 8; i++) {
-      scene.load.image(
-        `lenny_walk_${i}`,
-        `src/assets/sprites/lenny/grey_walk_${i}.PNG`
-      );
-    }
-    scene.load.audio('jump', 'src/assets/audio/cartoon-jump-6462.mp3');
-  }
-
   static createAnimations(scene) {
     scene.anims.create({
       key: 'idle',
@@ -37,10 +24,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
-    constructor(scene, x, y) {
-      super(scene, x, y, 'lenny_idle');
-      scene.add.existing(this);
-      scene.physics.add.existing(this);
+  constructor(scene, x, y, inputService) {
+    super(scene, x, y, 'lenny_idle');
+    scene.add.existing(this);
+    scene.physics.add.existing(this);
 
       const scale = 0.8;
       this.setScale(scale);
@@ -51,18 +38,42 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.body.setSize(48 * scale, 45 * scale);
       this.body.setOffset(10 * scale, 18 * scale);
 
-      this.cursors = scene.input.keyboard.createCursorKeys();
-      this.jumpSound = scene.sound.add('jump');
-      this.jumpCount = 0;
-
-      // Movement tuning constants
+    // Store input service under a non-reserved property to avoid clashing
+    // with Phaser's own `input` component on game objects
+    this.inputService = inputService;
+    this.jumpSound = scene.sound.add('jump');
+    this.jumpCount = 0;
+      
+         // Movement tuning constants
       this.moveSpeed = 160;
       this.jumpSpeed = 450;
+  }
+
+  update(delta = 0, timeScale = 1) {
+    const onGround = this.body.blocked.down;
+    if (onGround) this.jumpCount = 0;
+
+    if (this.inputService.left()) {
+      this.setVelocityX(-160);
+      this.setFlipX(true);
+      if (onGround) this.play('walk', true);
+    } else if (this.inputService.right()) {
+      this.setVelocityX(160);
+      this.setFlipX(false);
+      if (onGround) this.play('walk', true);
+    } else {
+      this.setVelocityX(0);
+      if (onGround) this.play('idle', true);
     }
 
-    update(delta = 0, timeScale = 1) {
-      const onGround = this.body.blocked.down;
-      if (onGround) this.jumpCount = 0;
+    const jumpPressed = this.inputService.jumpJustPressed();
+    if (jumpPressed && (onGround || this.jumpCount < 2)) {
+      this.setVelocityY(-450);
+      this.jumpSound.play();
+      this.jumpCount++;
+      this.anims.stop();
+      this.setTexture('lenny_jump_1');
+    }
 
       const speed = this.moveSpeed * timeScale;
       if (this.cursors.left.isDown) {
