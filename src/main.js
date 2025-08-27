@@ -11,6 +11,10 @@ const config = {
   width: GAME_WIDTH,
   pixelArt: true,
   height: GAME_HEIGHT,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
   // Camera zoom is managed in Level1Scene after the map loads
   physics: {
     default: 'arcade',
