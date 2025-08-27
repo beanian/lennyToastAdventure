@@ -133,11 +133,15 @@ export default class Level1Scene extends Phaser.Scene {
     }
 
     // --- UI ---
+    // Create a container for UI elements so they stay visible when the camera moves
+    this.ui = this.add.container(0, 0).setScrollFactor(0).setDepth(10);
+
     this.health = 3;
     this.isDead = false;
     this.isInvincible = false;
     this.toastCount = 0;
     this.createHealthIcons();
+
     const toastSrc = this.textures.get('toast').getSourceImage();
     const toastScale = (this.player.displayHeight / toastSrc.height) * 0.5;
     const lastHealth = this.healthIcons[this.healthIcons.length - 1];
@@ -147,8 +151,9 @@ export default class Level1Scene extends Phaser.Scene {
       .image(toastX, toastY, 'toast')
       .setOrigin(0, 0)
       .setScale(toastScale)
-      .setScrollFactor(0)
-      .setDepth(5);
+      .setDepth(10);
+    this.ui.add(this.toastIcon);
+
     this.toastText = this.add
       .text(
         this.toastIcon.x + this.toastIcon.displayWidth + 5,
@@ -161,15 +166,17 @@ export default class Level1Scene extends Phaser.Scene {
       )
       .setOrigin(0, 0.5)
       .setStroke('#000', 4)
-      .setScrollFactor(0)
-      .setDepth(5);
+      .setDepth(10);
     this.toastText.setShadow(2, 2, '#000', 2, true, true);
+    this.ui.add(this.toastText);
   }
 
   spawnEnemy(kind, x, y, props, map) {
     const enemy = new Sockroach(this, x, y, this.player.displayHeight);
     enemy.play('sockroach_walk');
     enemy.speed = Number(props.speed ?? 60);
+    // Start moving left by default
+    enemy.setVelocityX(-enemy.speed);
 
     if (props.pathName) {
       const paths = map.getObjectLayer('Paths');
@@ -300,8 +307,8 @@ export default class Level1Scene extends Phaser.Scene {
         .image(x, 30, 'lenny_face')
         .setOrigin(0, 0)
         .setScale(scale)
-        .setScrollFactor(0)
-        .setDepth(5);
+        .setDepth(10);
+      this.ui.add(icon);
       this.healthIcons.push(icon);
     }
   }
