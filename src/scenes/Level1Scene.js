@@ -2,6 +2,7 @@
 import Player from '../entities/Player.js';
 import Sockroach from '../entities/Sockroach.js';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants.js';
+import { init as audioInit, sfx, music } from '../AudioBus.js';
 import InputService from '../services/InputService.js';
 
 export default class Level1Scene extends Phaser.Scene {
@@ -10,6 +11,7 @@ export default class Level1Scene extends Phaser.Scene {
   }
 
   create() {
+    audioInit(this);
     // --- Map + tiles ---
     const map = this.make.tilemap({ key: 'level1' });
     const tiles = map.addTilesetImage(
@@ -92,13 +94,7 @@ export default class Level1Scene extends Phaser.Scene {
     if (platforms) this.physics.add.collider(this.enemies, platforms);
 
     // --- Audio ---
-    this.toastSound = this.sound.add('toastCollect');
-    this.bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });
-    this.hurtSound = this.sound.add('hurt');
-    this.landEnemySound = this.sound.add('landEnemy');
-    this.deathSound = this.sound.add('death');
-    this.respawnSound = this.sound.add('respawn');
-    this.bgm.play();
+    this.bgm = music('bgm', { loop: true, volume: 0.5 });
 
     // --- Parse Entities: enemies + collectibles ---
     if (entities) {
@@ -263,7 +259,7 @@ export default class Level1Scene extends Phaser.Scene {
       playerObj.body.prev.y < playerObj.body.y;
 
     if (falling && playerBottom <= enemyTop + 5) {
-      this.landEnemySound.play();
+      sfx('landEnemy');
       enemy.alive = false;
       enemy.play('sockroach_stomp');
       enemy.setVelocity(0, 0);
@@ -276,7 +272,7 @@ export default class Level1Scene extends Phaser.Scene {
       });
     } else {
       if (this.isInvincible) return;
-      this.hurtSound.play();
+      sfx('hurt');
       this.health -= 1;
       this.removeHealthIcon();
       this.isInvincible = true;
@@ -309,7 +305,7 @@ export default class Level1Scene extends Phaser.Scene {
       duration: 300,
       onComplete: () => toast.destroy()
     });
-    this.toastSound.play();
+    sfx('toastCollect');
     this.toastCount += toast.value;
     this.toastText.setText(`${this.toastCount}`);
     this.tweens.add({
@@ -363,7 +359,7 @@ export default class Level1Scene extends Phaser.Scene {
     if (this.isDead) return;
     this.isDead = true;
     this.bgm.stop();
-    this.deathSound.play();
+    sfx('death');
     this.player.setVelocity(0, 0);
     this.player.anims.stop();
     this.player.setTexture('lenny_idle');
@@ -379,8 +375,8 @@ export default class Level1Scene extends Phaser.Scene {
         this.player.jumpCount = 0;
         this.health = 3;
         this.resetHealthIcons();
-        this.respawnSound.play();
-        this.respawnSound.once('complete', () => {
+        const respawn = sfx('respawn');
+        respawn.once('complete', () => {
           this.bgm.setVolume(0);
           this.bgm.play();
           this.tweens.add({

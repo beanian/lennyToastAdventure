@@ -1,3 +1,5 @@
+import { sfx } from '../AudioBus.js';
+
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   static createAnimations(scene) {
     scene.anims.create({
@@ -41,7 +43,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Store input service under a non-reserved property to avoid clashing
     // with Phaser's own `input` component on game objects
     this.inputService = inputService;
-    this.jumpSound = scene.sound.add('jump');
     this.jumpCount = 0;
   }
 
@@ -65,7 +66,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const jumpPressed = this.inputService.jumpJustPressed();
     if (jumpPressed && (onGround || this.jumpCount < 2)) {
       this.setVelocityY(-450);
-      this.jumpSound.play();
+      sfx('jump');
       this.jumpCount++;
       this.anims.stop();
       this.setTexture('lenny_jump_1');
