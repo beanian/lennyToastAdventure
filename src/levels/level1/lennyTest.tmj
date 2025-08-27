@@ -421,7 +421,16 @@
  "tilesets":[
         {
          "firstgid":1,
-         "source":"..\/nature-paltformer-tileset-16x16.tsx"
+         "columns":7,
+         "image":"nature-paltformer-tileset-16x16.png",
+         "imageheight":176,
+         "imagewidth":112,
+         "margin":0,
+         "name":"nature-paltformer-tileset-16x16",
+         "spacing":0,
+         "tilecount":77,
+         "tileheight":16,
+         "tilewidth":16
         }],
  "tilewidth":16,
  "type":"map",
