@@ -94,11 +94,12 @@ export default class Level1Scene extends Phaser.Scene {
     const mapW = map.widthInPixels;
     const mapH = map.heightInPixels;
     const zoom = GAME_WIDTH / mapW;
-    this.cameras.main.setZoom(zoom);
-    this.cameras.main.setBounds(0, 0, mapW, mapH);
+    const cam = this.cameras.main;
+    cam.setZoom(zoom);
+    cam.setBounds(0, 0, mapW, mapH);
     this.physics.world.setBounds(0, 0, mapW, mapH);
-    this.cameras.main.setSize(GAME_WIDTH, GAME_HEIGHT);
-    this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+    cam.setSize(GAME_WIDTH, GAME_HEIGHT);
+    cam.startFollow(this.player, true, 0.08, 0.08);
 
     // --- Enemy vs ground/platforms ---
     this.physics.add.collider(this.enemies, ground);
@@ -173,10 +174,11 @@ export default class Level1Scene extends Phaser.Scene {
 
     // Render UI elements with a dedicated camera so they're
     // unaffected by the main camera's scrolling and zoom
-    this.cameras.main.ignore(this.ui);
-    this.uiCamera = this.cameras.add(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    this.uiCamera.setScroll(0, 0);
-    this.uiCamera.ignore(this.children.list.filter(obj => obj !== this.ui));
+    cam.ignore(this.ui);
+    this.uiCam = this.cameras
+      .add(0, 0, GAME_WIDTH, GAME_HEIGHT, true)
+      .setScroll(0, 0);
+    this.uiCam.ignore(this.children.list.filter(obj => obj !== this.ui));
   }
 
   spawnEnemy(kind, x, y, props, map) {
