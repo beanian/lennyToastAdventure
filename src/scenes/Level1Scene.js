@@ -1,31 +1,46 @@
 /* global Phaser */
+import Player from '../entities/Player.js';
+import Sockroach from '../entities/Sockroach.js';
+
 export default class Level1Scene extends Phaser.Scene {
   constructor() {
     super('Level1');
   }
 
   preload() {
-    this.load.tilemapTiledJSON('level1', 'src/levels/level1/lennyTest.tmj');
-    this.load.image('tiles', 'src/levels/level1/nature-paltformer-tileset-16x16.png');
+    this.load.tilemapTiledJSON(
+      'level1',
+      'src/levels/level1/lennyTest.tmj'
+    );
+    this.load.image(
+      'tiles',
+      'src/levels/level1/nature-paltformer-tileset-16x16.png'
+    );
 
-    // Placeholder single-frame sprites
+    Player.preload(this);
+    Sockroach.preload(this);
     this.load.image('toast', 'src/assets/sprites/toast/toast_sprite.png');
-    this.load.image('sockroach', 'src/assets/sprites/sockroach/sockroach_walk_1.png');
-    this.load.image('player', 'src/assets/sprites/lenny/grey_idle.PNG');
+
+    this.load.audio('bgm', 'src/assets/audio/Pixel Jump Groove.mp3');
+    this.load.audio('toastCollect', 'src/assets/audio/toast-collect.mp3');
   }
 
   create() {
     // --- Map + tiles ---
     const map = this.make.tilemap({ key: 'level1' });
-    const tiles = map.addTilesetImage('nature-paltformer-tileset-16x16', 'tiles');
+    const tiles = map.addTilesetImage(
+      'nature-paltformer-tileset-16x16',
+      'tiles'
+    );
 
-    const sky = map.createLayer('Sky', tiles, 0, 0);
-    const decorBack = map.createLayer('DecorBack', tiles, 0, 0);
+    map.createLayer('Sky', tiles, 0, 0);
+    map.createLayer('DecorBack', tiles, 0, 0);
     const ground = map.createLayer('Ground', tiles, 0, 0);
-    const platforms = map.getLayerIndex('Platforms') !== -1
-      ? map.createLayer('Platforms', tiles, 0, 0)
-      : null;
-    const decorFront = map.createLayer('DecorForground', tiles, 0, 0);
+    const platforms =
+      map.getLayerIndex('Platforms') !== -1
+        ? map.createLayer('Platforms', tiles, 0, 0)
+        : null;
+    map.createLayer('DecorForground', tiles, 0, 0);
 
     // Collision by tile property
     ground.setCollisionByProperty({ collision: true });
@@ -37,11 +52,15 @@ export default class Level1Scene extends Phaser.Scene {
 
     // --- Player spawn from Entities layer ---
     const entities = map.getObjectLayer('Entities');
-    let spawnX = 64, spawnY = 64;
+    let spawnX = 64;
+    let spawnY = 64;
     if (entities) {
-      const spawn = entities.objects.find(o =>
-        o.name === 'Spawn_Player' ||
-        (o.properties || []).some(p => p.name === 'type' && p.value === 'spawn')
+      const spawn = entities.objects.find(
+        o =>
+          o.name === 'Spawn_Player' ||
+          (o.properties || []).some(
+            p => p.name === 'type' && p.value === 'spawn'
+          )
       );
       if (spawn) {
         spawnX = spawn.x;
@@ -49,10 +68,9 @@ export default class Level1Scene extends Phaser.Scene {
       }
     }
 
-    this.player = this.physics.add
-      .sprite(spawnX, spawnY, 'player')
-      .setOrigin(0, 1)
-      .setCollideWorldBounds(true);
+    Player.createAnimations(this);
+    Sockroach.createAnimations(this);
+    this.player = new Player(this, spawnX, spawnY);
 
     // --- Colliders ---
     this.physics.add.collider(this.player, ground);
@@ -68,6 +86,11 @@ export default class Level1Scene extends Phaser.Scene {
     // --- Enemy vs ground/platforms ---
     this.physics.add.collider(this.enemies, ground);
     if (platforms) this.physics.add.collider(this.enemies, platforms);
+
+    // --- Audio ---
+    this.toastSound = this.sound.add('toastCollect');
+    this.bgm = this.sound.add('bgm', { loop: true, volume: 0.5 });
+    this.bgm.play();
 
     // --- Parse Entities: enemies + collectibles ---
     if (entities) {
@@ -87,14 +110,11 @@ export default class Level1Scene extends Phaser.Scene {
         }
       });
     }
-
-    // --- Player basic controls (POC) ---
-    this.cursors = this.input.keyboard.createCursorKeys();
   }
 
   spawnEnemy(kind, x, y, props, map) {
-    const enemy = this.enemies.create(x, y, 'sockroach').setOrigin(0, 1);
-    enemy.setCollideWorldBounds(true);
+    const enemy = new Sockroach(this, x, y, this.player.displayHeight);
+    enemy.play('sockroach_walk');
     enemy.speed = Number(props.speed ?? 60);
 
     if (props.pathName) {
@@ -109,6 +129,7 @@ export default class Level1Scene extends Phaser.Scene {
       }
     }
 
+    this.enemies.add(enemy);
     return enemy;
   }
 
@@ -118,32 +139,28 @@ export default class Level1Scene extends Phaser.Scene {
 
     this.physics.add.overlap(this.player, toast, () => {
       toast.disableBody(true, true);
+      this.toastSound.play();
     });
     return toast;
   }
 
   update() {
-    const speed = 150;
-    const onGround =
-      this.player.body?.blocked.down || this.player.body?.touching.down;
-
-    this.player.setVelocityX(0);
-    if (this.cursors.left.isDown) this.player.setVelocityX(-speed);
-    if (this.cursors.right.isDown) this.player.setVelocityX(speed);
-    if (this.cursors.up.isDown && onGround) this.player.setVelocityY(-280);
-
-    // Enemy patrol update
+    this.player.update();
     this.enemies.children.iterate(e => {
-      if (!e || !e.patrol || e.patrol.length < 2) return;
-      const tgt = e.patrol[e.patrolIndex];
-      const dx = tgt.x - e.x;
-      const dy = tgt.y - e.y;
-      const len = Math.max(1, Math.hypot(dx, dy));
-      e.setVelocity((dx / len) * e.speed, (dy / len) * e.speed);
-      if (Math.hypot(e.x - tgt.x, e.y - tgt.y) < 3) {
-        e.patrolIndex = (e.patrolIndex + 1) % e.patrol.length;
+      if (!e) return;
+      if (e.patrol && e.patrol.length >= 2) {
+        const tgt = e.patrol[e.patrolIndex];
+        const dx = tgt.x - e.x;
+        const dy = tgt.y - e.y;
+        const len = Math.max(1, Math.hypot(dx, dy));
+        e.setVelocity((dx / len) * e.speed, (dy / len) * e.speed);
+        if (Math.hypot(e.x - tgt.x, e.y - tgt.y) < 3) {
+          e.patrolIndex = (e.patrolIndex + 1) % e.patrol.length;
+        }
+        e.flipX = e.body.velocity.x < 0;
+      } else if (e.update) {
+        e.update();
       }
-      e.flipX = e.body.velocity.x < 0;
     });
   }
 }
