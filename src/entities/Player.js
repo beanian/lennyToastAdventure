@@ -1,17 +1,4 @@
 export default class Player extends Phaser.Physics.Arcade.Sprite {
-  static preload(scene) {
-    scene.load.image('lenny_idle', 'src/assets/sprites/lenny/grey_idle.PNG');
-    scene.load.image('lenny_jump_1', 'src/assets/sprites/lenny/grey_jump_1.PNG');
-    scene.load.image('lenny_jump_2', 'src/assets/sprites/lenny/grey_jump_2.PNG');
-    for (let i = 1; i <= 8; i++) {
-      scene.load.image(
-        `lenny_walk_${i}`,
-        `src/assets/sprites/lenny/grey_walk_${i}.PNG`
-      );
-    }
-    scene.load.audio('jump', 'src/assets/audio/cartoon-jump-6462.mp3');
-  }
-
   static createAnimations(scene) {
     scene.anims.create({
       key: 'idle',
