@@ -189,10 +189,11 @@ export default class Level1Scene extends Phaser.Scene {
       const paths = map.getObjectLayer('Paths');
       const pathObj = paths?.objects.find(o => o.name === props.pathName);
       if (pathObj?.polyline) {
-        // Normalize polyline points to world space once
+        // Normalize polyline points to world space once, ignoring Y so enemy stays grounded
+        const baseY = enemy.y;
         const pts = pathObj.polyline.map(p => ({
           x: pathObj.x + p.x,
-          y: pathObj.y + p.y
+          y: baseY
         }));
         // Ensure patrol moves monotonically from left to right
         pts.sort((a, b) => a.x - b.x);
@@ -245,14 +246,13 @@ export default class Level1Scene extends Phaser.Scene {
         }
         const target = e.patrol[nextIndex];
         const dx = target.x - e.x;
-        const dy = target.y - e.y;
-        const dist = Math.hypot(dx, dy);
+        const dist = Math.abs(dx);
         if (dist < 2) {
           e.patrolIndex = nextIndex;
+          e.setVelocityX(0);
         } else {
-          const vx = (dx / dist) * e.speed;
-          const vy = (dy / dist) * e.speed;
-          e.setVelocity(vx, vy);
+          const vx = Math.sign(dx) * e.speed;
+          e.setVelocityX(vx);
           e.flipX = vx < 0;
         }
       } else if (e.update) {
