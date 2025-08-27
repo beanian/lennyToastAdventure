@@ -11,6 +11,7 @@ const config = {
   pixelArt: true,
   height: GAME_HEIGHT,
   // Camera zoom is managed in Level1Scene after the map loads
+  input: { gamepad: true },
   physics: {
     default: 'arcade',
     arcade: { gravity: { y: 700 } }
