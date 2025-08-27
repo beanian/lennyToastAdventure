@@ -1,3 +1,5 @@
+import { sfx } from '../AudioBus.js';
+
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   static preload(scene) {
     scene.load.image('lenny_idle', 'src/assets/sprites/lenny/grey_idle.PNG');
@@ -52,7 +54,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.body.setOffset(10 * scale, 18 * scale);
 
     this.cursors = scene.input.keyboard.createCursorKeys();
-    this.jumpSound = scene.sound.add('jump');
     this.jumpCount = 0;
   }
 
@@ -76,7 +77,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up);
     if (jumpPressed && (onGround || this.jumpCount < 2)) {
       this.setVelocityY(-450);
-      this.jumpSound.play();
+      sfx('jump');
       this.jumpCount++;
       this.anims.stop();
       this.setTexture('lenny_jump_1');
