@@ -46,7 +46,7 @@ export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
     scene.physics.add.existing(this);
 
     const scale = playerHeight / this.height;
-    this.setScale(scale *0.6);
+    this.setScale(scale * 0.6);
     const bodyWidth = this.displayWidth * 0.9;
     const bodyHeight = this.displayHeight * 0.9;
     this.body.setSize(bodyWidth, bodyHeight);
@@ -55,12 +55,23 @@ export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
       (this.displayHeight - bodyHeight) + 22
     );
 
-    //this.setFlipX(false);
     this.setCollideWorldBounds(true);
     this.setDepth(1);
     this.patrolLeft = x - 50;
     this.patrolRight = x + 50;
-    this.setVelocityX(50);
+    this.speed = 60;
+    // Move left initially so patrol starts by going towards the left bound
+    this.setVelocityX(-this.speed);
     this.alive = true;
+  }
+
+  update() {
+    if (!this.alive) return;
+    if (this.x <= this.patrolLeft) {
+      this.setVelocityX(this.speed);
+    } else if (this.x >= this.patrolRight) {
+      this.setVelocityX(-this.speed);
+    }
+    this.flipX = this.body.velocity.x < 0;
   }
 }
