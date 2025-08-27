@@ -46,7 +46,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.jumpCount = 0;
   }
 
-  update(delta) {
+  update() {
     const onGround = this.body.blocked.down;
     if (onGround) this.jumpCount = 0;
 
@@ -80,11 +80,5 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.setTexture('lenny_jump_2');
       }
     }
-
-    // Clamp velocities to keep movement deterministic and avoid frame-rate spikes
-    const maxX = 160;
-    const maxY = 600;
-    this.body.velocity.x = Phaser.Math.Clamp(this.body.velocity.x, -maxX, maxX);
-    this.body.velocity.y = Phaser.Math.Clamp(this.body.velocity.y, -maxY, maxY);
   }
 }

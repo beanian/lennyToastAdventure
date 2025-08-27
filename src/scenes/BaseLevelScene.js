@@ -221,9 +221,8 @@ export default class BaseLevelScene extends Phaser.Scene {
     return toast;
   }
 
-  update(time, delta) {
-    this.player.update(delta);
-    const dt = (delta / 1000) * this.physics.world.timeScale;
+  update() {
+    this.player.update();
     this.enemies.children.iterate(e => {
       if (!e || e.alive === false) return;
       if (e.patrol && e.patrol.length >= 2) {
@@ -236,9 +235,8 @@ export default class BaseLevelScene extends Phaser.Scene {
         }
         const target = e.patrol[nextIndex];
         const dx = target.x - e.x;
-        const step = e.speed * dt;
-        if (Math.abs(dx) <= step) {
-          e.x = target.x;
+        const dist = Math.abs(dx);
+        if (dist < 2) {
           e.patrolIndex = nextIndex;
           e.setVelocityX(0);
         } else {
@@ -246,13 +244,8 @@ export default class BaseLevelScene extends Phaser.Scene {
           e.setVelocityX(vx);
           e.flipX = vx < 0;
         }
-        e.body.velocity.x = Phaser.Math.Clamp(
-          e.body.velocity.x,
-          -e.speed,
-          e.speed
-        );
       } else if (e.update) {
-        e.update(time, delta);
+        e.update();
       }
     });
   }
