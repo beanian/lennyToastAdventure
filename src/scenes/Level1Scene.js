@@ -98,7 +98,12 @@ export default class Level1Scene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, mapW, mapH);
     this.physics.world.setBounds(0, 0, mapW, mapH);
     this.cameras.main.setSize(GAME_WIDTH, GAME_HEIGHT);
-    this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+
+    // Camera follow rig with deadzone + look-ahead to keep
+    // UI stable and reduce jitter
+    this.followRig = this.add.container(spawnX, spawnY);
+    this.cameras.main.setDeadzone(GAME_WIDTH * 0.3, GAME_HEIGHT * 0.3);
+    this.cameras.main.startFollow(this.followRig, true, 0.08, 0.08);
 
     // --- Enemy vs ground/platforms ---
     this.physics.add.collider(this.enemies, ground);
@@ -221,10 +226,17 @@ export default class Level1Scene extends Phaser.Scene {
 
   update() {
     this.player.update();
+
+    // Move camera rig with look-ahead based on player's direction
+    const lookAhead = 50;
+    const dir = Math.sign(this.player.body.velocity.x);
+    this.followRig.x = this.player.x + dir * lookAhead;
+    this.followRig.y = this.player.y;
+
     this.enemies.children.iterate(e => {
       if (!e) return;
       if (e.patrol && e.patrol.length >= 2) {
-       const tgtX = e.patrol[e.patrolIndex];
+        const tgtX = e.patrol[e.patrolIndex];
         const dx = tgtX - e.x;
         const dir = Math.sign(dx);
         e.setVelocityX(dir * e.speed);
