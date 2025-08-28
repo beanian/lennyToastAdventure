@@ -8,7 +8,6 @@ export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
         { key: 'sockroach_walk_3' },
         { key: 'sockroach_walk_4' },
         { key: 'sockroach_walk_5' },
-        { key: 'sockroach_walk_6' }
       ],
       frameRate: 8,
       repeat: -1
