@@ -1,7 +1,7 @@
 /* global Phaser */
 import Player from '../entities/Player.js';
 import Sockroach from '../entities/Sockroach.js';
-import { GAME_WIDTH, GAME_HEIGHT } from '../constants.js';
+import { GAME_WIDTH, GAME_HEIGHT, DEBUG } from '../constants.js';
 import { init as audioInit, sfx, music } from '../AudioBus.js';
 import InputService from '../services/InputService.js';
 
@@ -116,6 +116,8 @@ export default class BaseLevelScene extends Phaser.Scene {
       });
     }
 
+    // (debug setup runs after UI is created below)
+
     // --- UI ---
     // Create a container for UI elements so they stay visible when the camera moves
     this.ui = this.add.container(0, 0).setScrollFactor(0).setDepth(10);
@@ -162,6 +164,9 @@ export default class BaseLevelScene extends Phaser.Scene {
       .add(0, 0, GAME_WIDTH, GAME_HEIGHT, true)
       .setScroll(0, 0);
     this.uiCam.ignore(this.children.list.filter(obj => obj !== this.ui));
+
+    // --- Debug setup (gizmos, hitboxes, state text) ---
+    this.setupDebug(map, { ground, platforms, entities });
   }
 
   spawnEnemy(kind, x, y, props, map) {
@@ -248,6 +253,19 @@ export default class BaseLevelScene extends Phaser.Scene {
         e.update();
       }
     });
+    // Update debug state text (cheap, short string build)
+    if (this.debugText && this.debugText.visible) {
+      const onGround = this.player.body?.blocked?.down;
+      const vx = Math.round(this.player.body?.velocity?.x || 0);
+      const vy = Math.round(this.player.body?.velocity?.y || 0);
+      const anim = this.player.anims?.currentAnim?.key || this.player.texture?.key;
+      this.debugText.setText(
+        `DEBUG\n` +
+          `pos:(${Math.round(this.player.x)},${Math.round(this.player.y)}) vel:(${vx},${vy})\n` +
+          `ground:${!!onGround} jumps:${this.player.jumpCount ?? 0} inv:${!!this.isInvincible} hp:${this.health}\n` +
+          `anim:${anim} enemies:${this.enemies?.getLength?.() ?? 0}`
+      );
+    }
   }
 
   handlePlayerEnemy(playerObj, enemy) {
@@ -396,6 +414,217 @@ export default class BaseLevelScene extends Phaser.Scene {
         });
       }
     });
+  }
+
+  // --- Debug helpers ---
+  setupDebug(map, layers) {
+    // Keyboard toggles
+    const kb = this.input?.keyboard;
+    if (kb) {
+      kb.on('keydown-F3', () => this.toggleDebug());
+      kb.on('keydown-F4', () => this.toggleHitboxes());
+      kb.on('keydown-F5', () => this.toggleGizmos());
+      kb.on('keydown-F6', () => this.toggleStateText());
+    }
+
+    // URL param ?debug=1 to force on at start
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('debug') === '1' || params.get('debug') === 'true') {
+        DEBUG.enabled = true;
+      }
+    } catch (_) {}
+
+    // Create containers
+    this.debugGfx = this.add.graphics().setDepth(1000);
+    this.debugGfx.setScrollFactor(1);
+    this.debugLabels = [];
+
+    this.debugText = this.add
+      .text(10, 90, '', { font: '14px Courier', fill: '#00ff88' })
+      .setScrollFactor(0)
+      .setDepth(1000);
+    this.ui.add(this.debugText);
+
+    // Physics debug graphic is owned by the world; create once
+    if (!this.physics.world.debugGraphic) {
+      this.physics.world.createDebugGraphic();
+    }
+
+    // Keep originals for toggles before gizmos draw
+    this._mapOriginal = map;
+    this._entitiesOriginal = layers.entities;
+
+    // Initial render based on flags
+    this.applyDebugFlags(map, layers);
+  }
+
+  applyDebugFlags(map, { entities }) {
+    const enabled = !!DEBUG.enabled;
+    // Hitboxes
+    const hb = enabled && DEBUG.showHitboxes;
+    this.physics.world.drawDebug = hb;
+    if (this.physics.world.debugGraphic) {
+      this.physics.world.debugGraphic.setVisible(hb);
+    }
+    // Gizmos
+    const gz = enabled && DEBUG.showGizmos;
+    this.debugGfx.setVisible(gz);
+    this.debugGfx.clear();
+    // clear old labels
+    if (this.debugLabels?.length) {
+      this.debugLabels.forEach(t => t.destroy());
+      this.debugLabels.length = 0;
+    }
+    if (gz) this.drawGizmos(map, entities);
+    // State text
+    const st = enabled && DEBUG.showState;
+    this.debugText.setVisible(st);
+  }
+
+  toggleDebug() {
+    DEBUG.enabled = !DEBUG.enabled;
+    const map = this._mapOriginal || this._mapCache;
+    const entities = this._entitiesOriginal || this._entitiesCache;
+    this.applyDebugFlags(map, { entities });
+  }
+
+  toggleHitboxes() {
+    DEBUG.showHitboxes = !DEBUG.showHitboxes;
+    const map = this._mapOriginal || this._mapCache;
+    const entities = this._entitiesOriginal || this._entitiesCache;
+    this.applyDebugFlags(map, { entities });
+  }
+
+  toggleGizmos() {
+    DEBUG.showGizmos = !DEBUG.showGizmos;
+    const map = this._mapOriginal || this._mapCache;
+    const entities = this._entitiesOriginal || this._entitiesCache;
+    this.applyDebugFlags(map, { entities });
+  }
+
+  toggleStateText() {
+    DEBUG.showState = !DEBUG.showState;
+    const map = this._mapOriginal || this._mapCache;
+    const entities = this._entitiesOriginal || this._entitiesCache;
+    this.applyDebugFlags(map, { entities });
+  }
+
+  drawGizmos(map, entitiesLayer) {
+    const g = this.debugGfx;
+    if (!g) return;
+
+    // Cache inputs for toggles
+    this._mapCache = map;
+    this._entitiesCache = entitiesLayer;
+
+    // Paths layer (patrols)
+    const paths = map.getObjectLayer('Paths');
+    if (paths) {
+      g.lineStyle(2, 0x00ffff, 0.9);
+      g.fillStyle(0x00ffff, 0.25);
+      paths.objects.forEach(o => {
+        if (o.polyline && Array.isArray(o.polyline)) {
+          const ox = o.x;
+          const oy = o.y;
+          const pts = o.polyline.map(p => ({ x: ox + p.x, y: oy + p.y }));
+          if (pts.length > 1) {
+            g.beginPath();
+            g.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length; i++) g.lineTo(pts[i].x, pts[i].y);
+            g.strokePath();
+            pts.forEach(p => g.fillCircle(p.x, p.y, 4));
+            // Label
+            g.lineStyle(1, 0x003333, 1);
+            g.strokeRect(pts[0].x - 20, pts[0].y - 18, 58, 14);
+            const t = this.add.text(pts[0].x - 18, pts[0].y - 18, o.name || 'path', {
+              font: '12px Courier',
+              color: '#00ffff'
+            }).setDepth(1000).setScrollFactor(1);
+            this.debugLabels.push(t);
+          }
+        }
+      });
+    }
+
+    // Spawn points and enemies/collectibles markers
+    if (entitiesLayer) {
+      entitiesLayer.objects.forEach(o => {
+        const props = Object.fromEntries((o.properties || []).map(p => [p.name, p.value]));
+        const type = (props.type || o.type || '').toLowerCase();
+        const isSpawn = type === 'spawn' || /spawn/i.test(o.name || '');
+        const x = o.x;
+        const y = o.y - (o.height || 0);
+        if (isSpawn) {
+          this.drawCross(g, x, y, 10, 0x55ff55);
+          this.drawLabel(x + 8, y - 18, o.name || 'Spawn', '#55ff55');
+        } else if (type === 'enemy') {
+          this.drawCross(g, x, y, 8, 0xffaa00);
+          this.drawLabel(x + 8, y - 18, props.kind || 'enemy', '#ffcc66');
+        } else if (type === 'collectible') {
+          this.drawCross(g, x, y, 6, 0xffcc00);
+          this.drawLabel(x + 8, y - 18, props.kind || 'col', '#ffcc00');
+        } else if (type === 'damage') {
+          this.drawDamageObject(g, o);
+        }
+      });
+    }
+
+    // Layers named Damage/Hazards (optional)
+    const damageLayer = map.getObjectLayer('Damage') || map.getObjectLayer('Hazards');
+    if (damageLayer) {
+      damageLayer.objects.forEach(o => this.drawDamageObject(g, o));
+    }
+  }
+
+  drawCross(g, x, y, r, color) {
+    g.lineStyle(2, color, 1);
+    g.beginPath();
+    g.moveTo(x - r, y);
+    g.lineTo(x + r, y);
+    g.moveTo(x, y - r);
+    g.lineTo(x, y + r);
+    g.strokePath();
+  }
+
+  drawLabel(x, y, text, color) {
+    const t = this.add
+      .text(x, y, text, { font: '12px Courier', color })
+      .setDepth(1000)
+      .setScrollFactor(1);
+    this.debugLabels.push(t);
+  }
+
+  drawDamageObject(g, o) {
+    g.lineStyle(2, 0xff4444, 1);
+    g.fillStyle(0xff4444, 0.2);
+    if (o.width && o.height) {
+      g.fillRect(o.x, o.y - o.height, o.width, o.height);
+      g.strokeRect(o.x, o.y - o.height, o.width, o.height);
+      this.drawLabel(o.x + 4, o.y - o.height - 14, o.name || 'damage', '#ff7777');
+      return;
+    }
+    const ox = o.x;
+    const oy = o.y;
+    if (o.polygon && Array.isArray(o.polygon) && o.polygon.length) {
+      g.beginPath();
+      g.moveTo(ox + o.polygon[0].x, oy + o.polygon[0].y);
+      for (let i = 1; i < o.polygon.length; i++)
+        g.lineTo(ox + o.polygon[i].x, oy + o.polygon[i].y);
+      g.closePath();
+      g.fillPath();
+      g.strokePath();
+      this.drawLabel(ox + 4, oy - 14, o.name || 'damage', '#ff7777');
+      return;
+    }
+    if (o.polyline && Array.isArray(o.polyline) && o.polyline.length) {
+      g.beginPath();
+      g.moveTo(ox + o.polyline[0].x, oy + o.polyline[0].y);
+      for (let i = 1; i < o.polyline.length; i++)
+        g.lineTo(ox + o.polyline[i].x, oy + o.polyline[i].y);
+      g.strokePath();
+      this.drawLabel(ox + 4, oy - 14, o.name || 'damage', '#ff7777');
+    }
   }
 }
 

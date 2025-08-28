@@ -1,4 +1,4 @@
-import { VERSION, GAME_WIDTH, GAME_HEIGHT } from './constants.js';
+import { VERSION, GAME_WIDTH, GAME_HEIGHT, DEBUG } from './constants.js';
 import BootScene from './scenes/BootScene.js';
 import PreloadScene from './scenes/PreloadScene.js';
 import Level1Scene from './scenes/Level1Scene.js';
@@ -14,7 +14,7 @@ const config = {
   input: { gamepad: true },
   physics: {
     default: 'arcade',
-    arcade: { gravity: { y: 700 } }
+    arcade: { gravity: { y: 700 }, debug: DEBUG.enabled }
   },
   scene: [BootScene, PreloadScene, Level1Scene]
 };
