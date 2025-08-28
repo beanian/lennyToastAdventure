@@ -242,7 +242,7 @@ export default class BaseLevelScene extends Phaser.Scene {
         } else {
           const vx = Math.sign(dx) * e.speed;
           e.setVelocityX(vx);
-          e.flipX = vx < 0;
+          e.flipX = vx > 0;
         }
       } else if (e.update) {
         e.update();
