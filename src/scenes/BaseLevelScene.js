@@ -19,7 +19,11 @@ export default class BaseLevelScene extends Phaser.Scene {
     const map = this.make.tilemap({ key: this.mapKey });
     const tiles = map.addTilesetImage(
       'nature-paltformer-tileset-16x16',
-      'tiles'
+      'tiles',
+      map.tileWidth,
+      map.tileHeight,
+      0,
+      0
     );
 
     map.createLayer('Sky', tiles, 0, 0).setDepth(-2);
@@ -84,9 +88,15 @@ export default class BaseLevelScene extends Phaser.Scene {
     // --- World & camera bounds ---
     const mapW = map.widthInPixels;
     const mapH = map.heightInPixels;
-    const zoom = GAME_WIDTH / mapW;
+    // Choose a zoom that never shrinks the world below the viewport.
+    // If the map is narrower/taller than the screen, zoom in to fill it.
+    // If the map is larger, use 1:1 so only the current area is visible.
+    let zoomW = GAME_WIDTH / Math.max(1, mapW);
+    let zoomH = GAME_HEIGHT / Math.max(1, mapH);
+    let zoom = Math.max(1, Math.max(zoomW, zoomH));
+    zoom = Phaser.Math.Clamp(zoom, 1, 3);
     const cam = this.cameras.main;
-    cam.setZoom(zoom);
+    cam.setZoom(2);
     cam.setBounds(0, 0, mapW, mapH);
     this.physics.world.setBounds(0, 0, mapW, mapH);
     cam.setSize(GAME_WIDTH, GAME_HEIGHT);
@@ -241,4 +251,3 @@ export default class BaseLevelScene extends Phaser.Scene {
     }
   }
 }
-

@@ -43,7 +43,7 @@ const manifest = {
     { key: 'ui_select', url: 'src/assets/audio/select_002.ogg' }
   ],
   tilemaps: [
-    { key: 'level1', url: 'src/levels/level1/lennyTest.tmj' }
+    { key: 'level1', url: 'src/levels/level1/level1.tmj' }
   ]
 };
 

@@ -21,7 +21,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         { key: 'lenny_walk_7' },
         { key: 'lenny_walk_8' }
       ],
-      frameRate: 12,
+      frameRate: 30,
       repeat: -1
     });
   }
