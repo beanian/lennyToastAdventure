@@ -34,6 +34,8 @@ export default class BaseLevelScene extends Phaser.Scene {
         ? map.createLayer('Platforms', tiles, 0, 0).setDepth(0)
         : null;
     map.createLayer('DecorForground', tiles, 0, 0).setDepth(2);
+    // Object layer holding spawns, enemies, collectibles
+    const entities = map.getObjectLayer('Objects');
 
     // Enable collision for any layer marked with a `collision` property
     const enableCollision = layer => {
@@ -50,18 +52,74 @@ export default class BaseLevelScene extends Phaser.Scene {
     this.enemies = this.physics.add.group();
     this.collectibles = this.physics.add.group({ allowGravity: false, immovable: true });
 
-    // --- Player spawn from Entities layer ---
-    const entities = map.getObjectLayer('Entities');
+    // --- Helpers for Objects layer parsing using gid -> tileset tile properties (Actors tileset)
+    const FLIP_FLAGS = 0xe0000000; // Tiled flip flag mask
+    const rawMap = this.cache.tilemap?.get(this.mapKey) || this.cache.json?.get(this.mapKey);
+    const rawTilesets = Array.isArray(rawMap.data?.tilesets) ? rawMap.data.tilesets : [];
+    const getRawTilesetForGid = gid => {
+      const g = gid & ~FLIP_FLAGS;
+      let candidate = null;
+      for (const ts of rawTilesets) {
+        if (typeof ts.firstgid !== 'number') continue;
+        if (g >= ts.firstgid) {
+          if (!candidate || ts.firstgid > candidate.firstgid) candidate = ts;
+        }
+      }
+      return candidate;
+    };
+    const toObj = props => {
+      if (!props) return {};
+      if (Array.isArray(props)) return Object.fromEntries(props.map(p => [p.name, p.value]));
+      return { ...props };
+    };
+    const getPropsFromGid = gid => {
+      if (!gid) return {};
+      const ts = getRawTilesetForGid(gid);
+      if (!ts) return {};
+      const localId = (gid & ~FLIP_FLAGS) - ts.firstgid;
+      // Prefer explicit tiles array (collection-of-images tileset)
+      if (Array.isArray(ts.tiles)) {
+        const t = ts.tiles.find(ti => ti.id === localId);
+        if (t && Array.isArray(t.properties)) return toObj(t.properties);
+      }
+      // Fallback to per-tileset tile properties structure, if present
+      if (ts.tileproperties && ts.tileproperties[localId]) return toObj(ts.tileproperties[localId]);
+      if (ts.tileProperties && ts.tileProperties[localId]) return toObj(ts.tileProperties[localId]);
+      return {};
+    };
+    // Helper to extract a normalized type/kind from an object, preferring gid tile properties, then object properties, then name
+    const getInfo = obj => {
+      const tileProps = getPropsFromGid(obj.gid);
+      const objProps = toObj(obj.properties);
+      const props = { ...tileProps, ...objProps };
+      let kind = (props.kind || '').toLowerCase();
+      // type is meta; may be empty; infer spawn from kind
+      let type = (props.type || '').toLowerCase();
+      if (!kind) {
+        const nameL = (obj.name || '').toLowerCase();
+        if (/spawn|player/.test(nameL)) kind = 'player';
+        else if (/sockroach|roach|enemy/.test(nameL)) kind = 'sockroach';
+        else if (/toast|collect/.test(nameL)) kind = 'toast';
+      }
+      if (!type && kind === 'player') type = 'spawn';
+      // coerce numeric strings
+      if (props.speed != null) props.speed = Number(props.speed);
+      if (props.value != null) props.value = Number(props.value);
+      if (props.patrolWidth != null) props.patrolWidth = Number(props.patrolWidth);
+      return { props, type, kind };
+    };
+
+    // --- Player spawn from Objects object layer
     let spawnX = 64;
     let spawnY = 64;
-    if (entities) {
-      const spawn = entities.objects.find(
-        o =>
-          o.name === 'Spawn_Player' ||
-          (o.properties || []).some(
-            p => p.name === 'type' && p.value === 'spawn'
-          )
-      );
+    if (entities && Array.isArray(entities.objects)) {
+      // Find an explicit spawn, or fallback to first object
+      let spawn = null;
+      for (const obj of entities.objects) {
+        const info = getInfo(obj);
+        if (info.kind === 'player' || info.type === 'spawn') { spawn = obj; break; }
+      }
+      if (!spawn && entities.objects.length) spawn = entities.objects[0];
       if (spawn) {
         spawnX = spawn.x;
         spawnY = spawn.y - (spawn.height || 0);
@@ -128,21 +186,21 @@ export default class BaseLevelScene extends Phaser.Scene {
     // Use persisted music volume (do not override)
     this.bgm = music('bgm', { loop: true });
 
-    // --- Parse Entities: enemies + collectibles ---
-    if (entities) {
+    // --- Parse Objects layer: enemies + collectibles from object properties ---
+    if (entities && Array.isArray(entities.objects)) {
+      const groundLayers = [ground, platforms].filter(Boolean);
       entities.objects.forEach(obj => {
-        const props = Object.fromEntries(
-          (obj.properties || []).map(p => [p.name, p.value])
-        );
-        const type = (props.type || obj.type || '').toLowerCase();
-        const kind = (props.kind || '').toLowerCase();
+        const info = getInfo(obj);
         const x = obj.x;
         const y = obj.y - (obj.height || 0);
-
-        if (type === 'enemy') {
-          spawnEnemy(this, kind, x, y, props, map);
-        } else if (type === 'collectible') {
-          spawnCollectible(this, kind, x, y, props);
+        if (info.kind === 'sockroach') {
+          // Support optional pathName for polyline patrols; else fall back to patrolWidth or default
+          spawnEnemy(this, 'sockroach', x, y, info.props, map, groundLayers);
+        } else if (info.kind === 'toast') {
+          spawnCollectible(this, 'toast', x, y, info.props);
+        } else if (info.kind && info.kind !== 'player') {
+          // Unknown kind: ignore gracefully
+          if (console && console.warn) console.warn('Unknown object kind', info.kind, obj);
         }
       });
     }

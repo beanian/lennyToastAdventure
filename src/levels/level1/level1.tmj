@@ -277,176 +277,56 @@
         }, 
         {
          "draworder":"topdown",
-         "id":6,
-         "name":"Entities",
+         "id":9,
+         "name":"Objects",
          "objects":[
                 {
-                 "height":0,
-                 "id":1,
-                 "name":"Spawn_Player",
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"kind",
-                         "type":"string",
-                         "value":"player"
-                        }, 
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"spawn"
-                        }],
+                 "gid":78,
+                 "height":64,
+                 "id":27,
+                 "name":"",
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":0,
-                 "x":102,
-                 "y":551.333
+                 "width":64,
+                 "x":104,
+                 "y":574.5
                 }, 
                 {
-                 "height":0,
-                 "id":2,
-                 "name":"Enemy_2",
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"kind",
-                         "type":"string",
-                         "value":"sockroach"
-                        }, 
-                        {
-                         "name":"pathName",
-                         "type":"string",
-                         "value":"patrol_2"
-                        }, 
-                        {
-                         "name":"speed",
-                         "type":"int",
-                         "value":60
-                        }, 
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"enemy"
-                        }],
+                 "gid":79,
+                 "height":64,
+                 "id":28,
+                 "name":"",
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":0,
-                 "x":593,
-                 "y":480
+                 "width":64,
+                 "x":252,
+                 "y":569
                 }, 
                 {
-                 "height":0,
-                 "id":3,
-                 "name":"Toast_1",
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"kind",
-                         "type":"string",
-                         "value":"toast"
-                        }, 
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"collectible"
-                        }, 
-                        {
-                         "name":"value",
-                         "type":"string",
-                         "value":"1"
-                        }],
+                 "gid":81,
+                 "height":63,
+                 "id":29,
+                 "name":"",
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":0,
-                 "x":198.667,
-                 "y":492
+                 "width":64,
+                 "x":269.5,
+                 "y":460
                 }, 
                 {
-                 "height":0,
-                 "id":6,
-                 "name":"Enemy_1",
-                 "point":true,
-                 "properties":[
-                        {
-                         "name":"kind",
-                         "type":"string",
-                         "value":"sockroach"
-                        }, 
-                        {
-                         "name":"pathName",
-                         "type":"string",
-                         "value":"patrol_1"
-                        }, 
-                        {
-                         "name":"speed",
-                         "type":"int",
-                         "value":60
-                        }, 
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"enemy"
-                        }],
+                 "gid":79,
+                 "height":64,
+                 "id":30,
+                 "name":"",
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":0,
-                 "x":382,
-                 "y":565
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":true,
-         "x":0,
-         "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":7,
-         "name":"Paths",
-         "objects":[
-                {
-                 "height":0,
-                 "id":7,
-                 "name":"patrol_1",
-                 "polyline":[
-                        {
-                         "x":0,
-                         "y":0
-                        }, 
-                        {
-                         "x":182.667,
-                         "y":-1.33333
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":272,
-                 "y":539.5
-                }, 
-                {
-                 "height":0,
-                 "id":9,
-                 "name":"patrol_2",
-                 "polyline":[
-                        {
-                         "x":0,
-                         "y":0
-                        }, 
-                        {
-                         "x":142,
-                         "y":-0.666667
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":522.667,
-                 "y":486
+                 "width":64,
+                 "x":589.5,
+                 "y":504.5
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -454,8 +334,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":8,
- "nextobjectid":10,
+ "nextlayerid":10,
+ "nextobjectid":31,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",
@@ -473,6 +353,95 @@
          "tilecount":77,
          "tileheight":16,
          "tilewidth":16
+        }, 
+        {
+         "columns":0,
+         "fillmode":"preserve-aspect-fit",
+         "firstgid":78,
+         "grid":
+            {
+             "height":1,
+             "orientation":"orthogonal",
+             "width":1
+            },
+         "margin":0,
+         "name":"Actors",
+         "objectalignment":"bottom",
+         "spacing":0,
+         "tilecount":3,
+         "tileheight":64,
+         "tilerendersize":"grid",
+         "tiles":[
+                {
+                 "id":0,
+                 "image":"..\/..\/assets\/sprites\/lenny\/grey.PNG",
+                 "imageheight":64,
+                 "imagewidth":64,
+                 "properties":[
+                        {
+                         "name":"kind",
+                         "type":"string",
+                         "value":"player"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"spawn"
+                        }],
+                 "type":"spawn"
+                }, 
+                {
+                 "id":1,
+                 "image":"..\/..\/assets\/sprites\/sockroach\/sockroach_walk_5.png",
+                 "imageheight":64,
+                 "imagewidth":64,
+                 "properties":[
+                        {
+                         "name":"kind",
+                         "type":"string",
+                         "value":"sockroach"
+                        }, 
+                        {
+                         "name":"pathName",
+                         "type":"string",
+                         "value":""
+                        }, 
+                        {
+                         "name":"speed",
+                         "type":"string",
+                         "value":"50"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"enemy"
+                        }],
+                 "type":"sockroach"
+                }, 
+                {
+                 "id":3,
+                 "image":"..\/..\/assets\/sprites\/toast\/toast_sprite.png",
+                 "imageheight":63,
+                 "imagewidth":64,
+                 "properties":[
+                        {
+                         "name":"kind",
+                         "type":"string",
+                         "value":"toast"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"collectible"
+                        }, 
+                        {
+                         "name":"value",
+                         "type":"string",
+                         "value":"1"
+                        }],
+                 "type":"toast"
+                }],
+         "tilewidth":64
         }],
  "tilewidth":16,
  "type":"map",

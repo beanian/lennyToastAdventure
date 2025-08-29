@@ -1,37 +1,28 @@
 import Sockroach from '../../entities/Sockroach.js';
 import { collectToast } from './HUD.js';
 
-export function spawnEnemy(scene, kind, x, y, props, map) {
+export function spawnEnemy(scene, kind, x, y, props, map, groundLayers = []) {
   // Ensure animations exist
   Sockroach.createAnimations(scene);
-  const enemy = new Sockroach(scene, x, y, scene.player.displayHeight);
+  const speed = Number(props.speed ?? 50);
+  const range = Number(props.patrolWidth ?? props.range ?? 160);
+  const enemy = new Sockroach(scene, x, y, scene.player.displayHeight, { speed, range, map, groundLayers });
   enemy.play('sockroach_walk');
-  enemy.speed = Number(props.speed ?? 60);
-
-  // Default movement is left/right unless a patrol path is provided
-  if (props.pathName) {
+  // Optional pathName: build patrol along polyline in 'Paths' layer
+  const pathName = (props.pathName || '').trim();
+  if (pathName) {
     const paths = map.getObjectLayer('Paths');
-    const pathObj = paths?.objects.find(o => o.name === props.pathName);
+    const pathObj = paths?.objects.find(o => o.name === pathName);
     if (pathObj?.polyline) {
-      // Normalize polyline points to world space once, ignoring Y so enemy stays grounded
       const baseY = enemy.y;
-      const pts = pathObj.polyline.map(p => ({
-        x: pathObj.x + p.x,
-        y: baseY
-      }));
-      // Ensure patrol moves monotonically from left to right
+      const pts = pathObj.polyline.map(p => ({ x: pathObj.x + p.x, y: baseY }));
       pts.sort((a, b) => a.x - b.x);
       enemy.patrol = pts;
       enemy.patrolIndex = 0;
       enemy.patrolDir = 1;
-      // Start stationary; update loop will drive movement
       enemy.setVelocity(0, 0);
     }
-  } else {
-    // Start moving left by default when no path is supplied
-    enemy.setVelocityX(-enemy.speed);
   }
-
   scene.enemies.add(enemy);
   return enemy;
 }
