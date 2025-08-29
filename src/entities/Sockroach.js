@@ -80,6 +80,6 @@ export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
       const newDir = -dir;
       this.setVelocityX(newDir * this.speed);
     }
-    this.flipX = this.body.velocity.x < 0;
+    this.flipX = this.body.velocity.x > 0;
   }
 }
