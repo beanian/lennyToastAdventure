@@ -4,8 +4,12 @@ import { collectToast } from './HUD.js';
 export function spawnEnemy(scene, kind, x, y, props, map, groundLayers = []) {
   // Ensure animations exist
   Sockroach.createAnimations(scene);
-  const speed = Number(props.speed ?? 50);
-  const range = Number(props.patrolWidth ?? props.range ?? 160);
+  const toNum = (v, d) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : d;
+  };
+  const speed = toNum(props.speed, 50);
+  const range = toNum(props.patrolWidth ?? props.range, 160);
   const enemy = new Sockroach(scene, x, y, scene.player.displayHeight, { speed, range, map, groundLayers });
   enemy.play('sockroach_walk');
   // Optional pathName: build patrol along polyline in 'Paths' layer
@@ -35,7 +39,11 @@ export function spawnCollectible(scene, kind, x, y, props) {
   toast.body.setSize(toast.width * scale, toast.height * scale);
   toast.body.setOffset(0, toast.height * (1 - scale));
   toast.setImmovable(true);
-  toast.value = Number(props.value ?? 1);
+  const toNum = (v, d) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : d;
+  };
+  toast.value = toNum(props.value, 1);
   toast.bobTween = scene.tweens.add({
     targets: toast,
     y: y - 10,
