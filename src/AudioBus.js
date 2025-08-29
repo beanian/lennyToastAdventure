@@ -72,3 +72,18 @@ export function setMusicVolume(v) {
 export function getMusicVolume() {
   return musicVolume;
 }
+
+// Runtime-only adjusters (no persistence); used for live preview in Options
+export function previewSfxVolume(v) {
+  sfxVolume = Math.max(0, Math.min(1, Number(v) || 0));
+  Object.values(sfxCache).forEach(s => {
+    try { s.setVolume(sfxVolume); } catch (_) {}
+  });
+}
+
+export function previewMusicVolume(v) {
+  musicVolume = Math.max(0, Math.min(1, Number(v) || 0));
+  if (currentMusic?.sound) {
+    try { currentMusic.sound.setVolume(musicVolume); } catch (_) {}
+  }
+}

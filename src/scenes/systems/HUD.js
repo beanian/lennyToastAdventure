@@ -1,6 +1,6 @@
 /* global Phaser */
 import { GAME_WIDTH, GAME_HEIGHT } from '../../constants.js';
-import { sfx, getMusicVolume, setMusicVolume, getSfxVolume, setSfxVolume } from '../../AudioBus.js';
+import { sfx, getMusicVolume, setMusicVolume, getSfxVolume, setSfxVolume, previewMusicVolume, previewSfxVolume } from '../../AudioBus.js';
 
 export function createHUD(scene) {
   // Core state
@@ -198,8 +198,7 @@ export function showGameOver(scene) {
       txt.setColor('#111');
     });
     button.on('pointerdown', () => {
-      // reuse existing UI sfx for click
-      sfx('toastCollect');
+      sfx('ui_select');
       onClick();
     });
     overlay.add(button);
@@ -245,23 +244,26 @@ export function showPauseMenu(scene) {
   const panelX = GAME_WIDTH / 2;
   const panelY = GAME_HEIGHT / 2;
   const panel = scene.add.container(panelX, panelY);
-  const panelBg = scene.add.rectangle(0, 0, panelW, panelH, 0xffffff, 1).setStrokeStyle(6, 0x111111);
+  const panelBg = scene.add.image(0, 0, 'ui_frame');
+  panelBg.setDisplaySize(panelW, panelH);
   const title = scene.add.text(0, -panelH / 2 + 40, 'PAUSED', { font: 'bold 36px Courier', color: '#111' }).setOrigin(0.5);
   panel.add([panelBg, title]);
 
   // Helper to make a button
   const makeButton = (label, x, y, onClick) => {
-    const w = 220;
-    const h = 56;
+    const w = Math.min(260, panelW - 80);
+    const h = 72;
     const btn = scene.add.container(x, y);
-    const bg = scene.add.rectangle(0, 0, w, h, 0xfff3c4, 1).setStrokeStyle(4, 0x111111);
-    const txt = scene.add.text(0, 0, label, { font: 'bold 24px Courier', color: '#111' }).setOrigin(0.5);
-    btn.add([bg, txt]);
+    const img = scene.add.image(0, 0, 'ui_btn02_1');
+    img.setDisplaySize(w, h);
+    const txt = scene.add.text(0, 0, label, { font: 'bold 26px Courier', color: '#111' }).setOrigin(0.5);
+    const zone = scene.add.zone(0, 0, w, h).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    btn.add([img, txt, zone]);
     btn.setSize(w, h);
-    btn.setInteractive(new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h), Phaser.Geom.Rectangle.Contains);
-    btn.on('pointerover', () => bg.setFillStyle(0xffcc00, 1));
-    btn.on('pointerout', () => bg.setFillStyle(0xfff3c4, 1));
-    btn.on('pointerdown', () => { sfx('toastCollect'); onClick(); });
+    zone.on('pointerover', () => img.setTexture('ui_btn02_2'));
+    zone.on('pointerout', () => img.setTexture('ui_btn02_1'));
+    zone.on('pointerdown', () => { img.setTexture('ui_btn02_3'); sfx('ui_select'); });
+    zone.on('pointerup', () => { img.setTexture('ui_btn02_2'); onClick(); });
     return btn;
   };
 
@@ -269,17 +271,17 @@ export function showPauseMenu(scene) {
   const main = scene.add.container(0, 0);
   const rowY = -panelH / 2 + 120;
   main.add(makeButton('Resume', 0, rowY, () => hidePauseMenu(scene)));
-  main.add(makeButton('Retry', -160, rowY + 70, () => {
+  main.add(makeButton('Options', 0, rowY + 80, () => {
+    main.setVisible(false);
+    options.setVisible(true);
+  }));
+  main.add(makeButton('Retry', 0, rowY + 160, () => {
     overlay.destroy();
     scene.isPaused = false;
     scene.physics.world.resume();
     scene.scene.restart();
   }));
-  main.add(makeButton('Options', 0, rowY + 70, () => {
-    main.setVisible(false);
-    options.setVisible(true);
-  }));
-  main.add(makeButton('Quit', 160, rowY + 70, () => {
+  main.add(makeButton('Quit', 0, rowY + 240, () => {
     try { window.location.href = window.location.href.split('?')[0]; } catch (_) { scene.game.destroy(true); }
   }));
   panel.add(main);
@@ -298,20 +300,38 @@ export function showPauseMenu(scene) {
     const group = scene.add.container(0, y);
     const lbl = scene.add.text(-panelW / 2 + 40, 0, label, { font: 'bold 22px Courier', color: '#111' }).setOrigin(0, 0.5);
     const valueText = scene.add.text(0, 0, `${Math.round(getPending() * 100)}%`, { font: 'bold 24px Courier', color: '#111' }).setOrigin(0.5);
-    const minus = makeButton('-', -140, 0, () => {
+    const minus = scene.add.image(-140, 0, 'ui_btn_minus');
+    minus.setDisplaySize(72, 72);
+    // Capture base scale after setting display size so hover scaling is relative
+    const minusBaseX = minus.scaleX;
+    const minusBaseY = minus.scaleY;
+    const minusZone = scene.add.zone(-140, 0, 72, 72).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    minusZone.on('pointerover', () => minus.setScale(minusBaseX * 1.05, minusBaseY * 1.05));
+    minusZone.on('pointerout', () => minus.setScale(minusBaseX, minusBaseY));
+    minusZone.on('pointerdown', () => {
       const v = Math.max(0, getPending() - 0.1);
       setPending(v);
+      // Live preview without persisting
+      if (label.toLowerCase().includes('music')) previewMusicVolume(v); else previewSfxVolume(v);
       valueText.setText(`${Math.round(v * 100)}%`);
+      sfx('ui_select');
     });
-    const plus = makeButton('+', 140, 0, () => {
+    const plus = scene.add.image(140, 0, 'ui_btn_plus');
+    plus.setDisplaySize(72, 72);
+    const plusBaseX = plus.scaleX;
+    const plusBaseY = plus.scaleY;
+    const plusZone = scene.add.zone(140, 0, 72, 72).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    plusZone.on('pointerover', () => plus.setScale(plusBaseX * 1.05, plusBaseY * 1.05));
+    plusZone.on('pointerout', () => plus.setScale(plusBaseX, plusBaseY));
+    plusZone.on('pointerdown', () => {
       const v = Math.min(1, getPending() + 0.1);
       setPending(v);
+      // Live preview without persisting
+      if (label.toLowerCase().includes('music')) previewMusicVolume(v); else previewSfxVolume(v);
       valueText.setText(`${Math.round(v * 100)}%`);
+      sfx('ui_select');
     });
-    // Narrower buttons for +/-
-    minus.list[0].width = 80; minus.setSize(80, 56);
-    plus.list[0].width = 80; plus.setSize(80, 56);
-    group.add([lbl, valueText, minus, plus]);
+    group.add([lbl, valueText, minus, plus, minusZone, plusZone]);
     return group;
   };
 

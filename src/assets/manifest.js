@@ -22,6 +22,15 @@ const manifest = {
     { key: 'lenny_face', url: 'src/assets/sprites/lenny/lenny_face.png' },
     { key: 'game_over', url: 'src/assets/sprites/game/game_over.png' },
     { key: 'tiles', url: 'src/levels/level1/nature-paltformer-tileset-16x16.png' }
+    ,
+    // UI assets
+    { key: 'ui_frame', url: 'src/assets/UI/Sprites/UI_Flat_Frame02a.png' },
+    { key: 'ui_btn02_1', url: 'src/assets/UI/Sprites/UI_Flat_Button02a_1.png' },
+    { key: 'ui_btn02_2', url: 'src/assets/UI/Sprites/UI_Flat_Button02a_2.png' },
+    { key: 'ui_btn02_3', url: 'src/assets/UI/Sprites/UI_Flat_Button02a_3.png' },
+    { key: 'ui_btn02_4', url: 'src/assets/UI/Sprites/UI_Flat_Button02a_4.png' },
+    { key: 'ui_btn_plus', url: 'src/assets/UI/Sprites/UI_Flat_ButtonPlus01a.png' },
+    { key: 'ui_btn_minus', url: 'src/assets/UI/Sprites/UI_Flat_ButtonMinus01a.png' }
   ],
   audio: [
     { key: 'jump', url: 'src/assets/audio/cartoon-jump-6462.mp3' },
@@ -30,7 +39,8 @@ const manifest = {
     { key: 'hurt', url: 'src/assets/audio/Hurt.wav' },
     { key: 'landEnemy', url: 'src/assets/audio/LandOnEnemy.wav' },
     { key: 'death', url: 'src/assets/audio/game-over-38511.mp3' },
-    { key: 'respawn', url: 'src/assets/audio/a_bulldog_respawning.mp3' }
+    { key: 'respawn', url: 'src/assets/audio/a_bulldog_respawning.mp3' },
+    { key: 'ui_select', url: 'src/assets/audio/select_002.ogg' }
   ],
   tilemaps: [
     { key: 'level1', url: 'src/levels/level1/lennyTest.tmj' }
