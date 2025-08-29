@@ -16,7 +16,6 @@ const manifest = {
     { key: 'sockroach_walk_3', url: 'src/assets/sprites/sockroach/sockroach_walk_3.png' },
     { key: 'sockroach_walk_4', url: 'src/assets/sprites/sockroach/sockroach_walk_4.png' },
     { key: 'sockroach_walk_5', url: 'src/assets/sprites/sockroach/sockroach_walk_5.png' },
-    { key: 'sockroach_walk_6', url: 'src/assets/sprites/sockroach/sockroach_walk_6.png' },
     { key: 'sockroach_stomp_1', url: 'src/assets/sprites/sockroach/sockroach_stomp_1.png' },
     { key: 'sockroach_stomp_2', url: 'src/assets/sprites/sockroach/sockroach_stomp_2.png' },
     { key: 'toast', url: 'src/assets/sprites/toast/toast_sprite.png' },
