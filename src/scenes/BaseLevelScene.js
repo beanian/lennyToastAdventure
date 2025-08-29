@@ -115,7 +115,8 @@ export default class BaseLevelScene extends Phaser.Scene {
     if (platforms) this.physics.add.collider(this.enemies, platforms);
 
     // --- Audio ---
-    this.bgm = music('bgm', { loop: true, volume: 0.5 });
+    // Use persisted music volume (do not override)
+    this.bgm = music('bgm', { loop: true });
 
     // --- Parse Entities: enemies + collectibles ---
     if (entities) {
@@ -141,6 +142,14 @@ export default class BaseLevelScene extends Phaser.Scene {
 
     // --- Debug setup (gizmos, hitboxes, state text) ---
     setupDebug(this, map, { ground, platforms, entities });
+
+    // Pause toggle (ESC)
+    const kb = this.input?.keyboard;
+    if (kb) {
+      kb.on('keydown-ESC', () => {
+        this.togglePause();
+      });
+    }
   }
 
   update() {

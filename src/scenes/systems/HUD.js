@@ -1,6 +1,6 @@
 /* global Phaser */
 import { GAME_WIDTH, GAME_HEIGHT } from '../../constants.js';
-import { sfx } from '../../AudioBus.js';
+import { sfx, getMusicVolume, setMusicVolume, getSfxVolume, setSfxVolume } from '../../AudioBus.js';
 
 export function createHUD(scene) {
   // Core state
@@ -59,6 +59,9 @@ export function createHUD(scene) {
   scene.resetHealthIcons = () => resetHealthIcons(scene);
   scene.playerDie = () => playerDie(scene);
   scene.collectToast = toast => collectToast(scene, toast);
+  scene.showPauseMenu = () => showPauseMenu(scene);
+  scene.hidePauseMenu = () => hidePauseMenu(scene);
+  scene.togglePause = () => togglePause(scene);
 }
 
 export function createHealthIcons(scene) {
@@ -221,4 +224,130 @@ export function showGameOver(scene) {
   // Attach to UI so UI camera renders it
   scene.ui.add(overlay);
   scene.gameOverUI = overlay;
+}
+
+export function showPauseMenu(scene) {
+  if (scene.isDead || scene.isPaused) return;
+  scene.isPaused = true;
+  // Pause physics to freeze gameplay, keep timers/tweens active for UI
+  scene.physics.world.pause();
+  if (scene.playerEnemyCollider) scene.playerEnemyCollider.active = false;
+
+  const overlay = scene.add.container(0, 0).setScrollFactor(0).setDepth(9000);
+  const dim = scene.add
+    .rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6)
+    .setOrigin(0, 0);
+  overlay.add(dim);
+
+  // Panel shell
+  const panelW = Math.min(720, GAME_WIDTH * 0.9);
+  const panelH = Math.min(440, GAME_HEIGHT * 0.85);
+  const panelX = GAME_WIDTH / 2;
+  const panelY = GAME_HEIGHT / 2;
+  const panel = scene.add.container(panelX, panelY);
+  const panelBg = scene.add.rectangle(0, 0, panelW, panelH, 0xffffff, 1).setStrokeStyle(6, 0x111111);
+  const title = scene.add.text(0, -panelH / 2 + 40, 'PAUSED', { font: 'bold 36px Courier', color: '#111' }).setOrigin(0.5);
+  panel.add([panelBg, title]);
+
+  // Helper to make a button
+  const makeButton = (label, x, y, onClick) => {
+    const w = 220;
+    const h = 56;
+    const btn = scene.add.container(x, y);
+    const bg = scene.add.rectangle(0, 0, w, h, 0xfff3c4, 1).setStrokeStyle(4, 0x111111);
+    const txt = scene.add.text(0, 0, label, { font: 'bold 24px Courier', color: '#111' }).setOrigin(0.5);
+    btn.add([bg, txt]);
+    btn.setSize(w, h);
+    btn.setInteractive(new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h), Phaser.Geom.Rectangle.Contains);
+    btn.on('pointerover', () => bg.setFillStyle(0xffcc00, 1));
+    btn.on('pointerout', () => bg.setFillStyle(0xfff3c4, 1));
+    btn.on('pointerdown', () => { sfx('toastCollect'); onClick(); });
+    return btn;
+  };
+
+  // Main menu container
+  const main = scene.add.container(0, 0);
+  const rowY = -panelH / 2 + 120;
+  main.add(makeButton('Resume', 0, rowY, () => hidePauseMenu(scene)));
+  main.add(makeButton('Retry', -160, rowY + 70, () => {
+    overlay.destroy();
+    scene.isPaused = false;
+    scene.physics.world.resume();
+    scene.scene.restart();
+  }));
+  main.add(makeButton('Options', 0, rowY + 70, () => {
+    main.setVisible(false);
+    options.setVisible(true);
+  }));
+  main.add(makeButton('Quit', 160, rowY + 70, () => {
+    try { window.location.href = window.location.href.split('?')[0]; } catch (_) { scene.game.destroy(true); }
+  }));
+  panel.add(main);
+
+  // Options container (hidden initially)
+  const options = scene.add.container(0, 0);
+  options.setVisible(false);
+  const optTitle = scene.add.text(0, -panelH / 2 + 110, 'OPTIONS', { font: 'bold 28px Courier', color: '#111' }).setOrigin(0.5);
+  options.add(optTitle);
+
+  // Pending volumes start from current levels
+  let pendingMusic = getMusicVolume();
+  let pendingSfx = getSfxVolume();
+
+  const makeVolumeControl = (label, y, getter, setter, getPending, setPending) => {
+    const group = scene.add.container(0, y);
+    const lbl = scene.add.text(-panelW / 2 + 40, 0, label, { font: 'bold 22px Courier', color: '#111' }).setOrigin(0, 0.5);
+    const valueText = scene.add.text(0, 0, `${Math.round(getPending() * 100)}%`, { font: 'bold 24px Courier', color: '#111' }).setOrigin(0.5);
+    const minus = makeButton('-', -140, 0, () => {
+      const v = Math.max(0, getPending() - 0.1);
+      setPending(v);
+      valueText.setText(`${Math.round(v * 100)}%`);
+    });
+    const plus = makeButton('+', 140, 0, () => {
+      const v = Math.min(1, getPending() + 0.1);
+      setPending(v);
+      valueText.setText(`${Math.round(v * 100)}%`);
+    });
+    // Narrower buttons for +/-
+    minus.list[0].width = 80; minus.setSize(80, 56);
+    plus.list[0].width = 80; plus.setSize(80, 56);
+    group.add([lbl, valueText, minus, plus]);
+    return group;
+  };
+
+  const musicCtl = makeVolumeControl('Background Music', -10, getMusicVolume, setMusicVolume, () => pendingMusic, v => pendingMusic = v);
+  const sfxCtl = makeVolumeControl('SFX', 50, getSfxVolume, setSfxVolume, () => pendingSfx, v => pendingSfx = v);
+  options.add([musicCtl, sfxCtl]);
+
+  // Save & Back button
+  const saveBack = makeButton('Save & Back', 0, panelH / 2 - 80, () => {
+    setMusicVolume(pendingMusic);
+    setSfxVolume(pendingSfx);
+    options.setVisible(false);
+    main.setVisible(true);
+  });
+  options.add(saveBack);
+  panel.add(options);
+
+  overlay.add(panel);
+  scene.ui.add(overlay);
+  scene.pauseUI = overlay;
+}
+
+export function hidePauseMenu(scene) {
+  if (!scene.isPaused) return;
+  scene.isPaused = false;
+  if (scene.pauseUI) {
+    scene.pauseUI.destroy();
+    scene.pauseUI = null;
+  }
+  scene.physics.world.resume();
+  if (!scene.isDead) {
+    if (scene.playerEnemyCollider) scene.playerEnemyCollider.active = true;
+    if (scene.player?.body) scene.player.body.enable = true;
+  }
+}
+
+export function togglePause(scene) {
+  if (scene.isPaused) hidePauseMenu(scene); else showPauseMenu(scene);
 }
