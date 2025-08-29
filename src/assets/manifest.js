@@ -20,6 +20,7 @@ const manifest = {
     { key: 'sockroach_stomp_2', url: 'src/assets/sprites/sockroach/sockroach_stomp_2.png' },
     { key: 'toast', url: 'src/assets/sprites/toast/toast_sprite.png' },
     { key: 'lenny_face', url: 'src/assets/sprites/lenny/lenny_face.png' },
+    { key: 'game_over', url: 'src/assets/sprites/game/game_over.png' },
     { key: 'tiles', url: 'src/levels/level1/nature-paltformer-tileset-16x16.png' }
   ],
   audio: [

@@ -73,7 +73,7 @@ export default class BaseLevelScene extends Phaser.Scene {
     // --- Colliders ---
     this.physics.add.collider(this.player, ground);
     if (platforms) this.physics.add.collider(this.player, platforms);
-    this.physics.add.collider(
+    this.playerEnemyCollider = this.physics.add.collider(
       this.player,
       this.enemies,
       this.handlePlayerEnemy,
@@ -91,6 +91,24 @@ export default class BaseLevelScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, mapW, mapH);
     cam.setSize(GAME_WIDTH, GAME_HEIGHT);
     cam.startFollow(this.player, true, 0.08, 0.08);
+
+    // Trigger death if player hits the bottom world bound (fell off level)
+    if (this.player.body) {
+      this.player.body.onWorldBounds = true;
+      this._onWorldBounds = (body, up, down) => {
+        if (body?.gameObject === this.player && down) {
+          this.playerDie();
+        }
+      };
+      this.physics.world.on('worldbounds', this._onWorldBounds, this);
+      this.events.once('shutdown', () => {
+        const world = this.physics?.world;
+        if (world) {
+          world.off('worldbounds', this._onWorldBounds, this);
+        }
+        this._onWorldBounds = null;
+      });
+    }
 
     // --- Enemy vs ground/platforms ---
     this.physics.add.collider(this.enemies, ground);
@@ -168,6 +186,7 @@ export default class BaseLevelScene extends Phaser.Scene {
   }
 
   handlePlayerEnemy(playerObj, enemy) {
+    if (this.isDead) return;
     if (enemy.alive === false) return;
 
     const playerBottom = playerObj.body.bottom;

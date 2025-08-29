@@ -124,6 +124,9 @@ export function collectToast(scene, toast) {
 export function playerDie(scene) {
   if (scene.isDead) return;
   scene.isDead = true;
+  // Disable player collisions to prevent further hurt sounds
+  if (scene.playerEnemyCollider) scene.playerEnemyCollider.active = false;
+  if (scene.player?.body) scene.player.body.enable = false;
   scene.bgm.stop();
   sfx('death');
   scene.player.setVelocity(0, 0);
@@ -134,32 +137,88 @@ export function playerDie(scene) {
     targets: scene.player,
     alpha: 0,
     angle: 180,
-    duration: 4000,
+    duration: 1200,
     onComplete: () => {
-      scene.player.setAngle(0);
-      scene.player.setPosition(scene.spawnPoint.x, scene.spawnPoint.y);
-      scene.player.jumpCount = 0;
-      scene.health = 3;
-      resetHealthIcons(scene);
-      const respawn = sfx('respawn');
-      respawn.once('complete', () => {
-        scene.bgm.setVolume(0);
-        scene.bgm.play();
-        scene.tweens.add({
-          targets: scene.bgm,
-          volume: 0.5,
-          duration: 1000
-        });
-      });
-      scene.tweens.add({
-        targets: scene.player,
-        alpha: 1,
-        duration: 500,
-        onComplete: () => {
-          scene.isDead = false;
-        }
-      });
+      // show game over overlay with actions
+      showGameOver(scene);
     }
   });
 }
 
+export function showGameOver(scene) {
+  // Dim background overlay
+  const overlay = scene.add.container(0, 0).setScrollFactor(0).setDepth(10000);
+  const dim = scene.add
+    .rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6)
+    .setOrigin(0, 0);
+  overlay.add(dim);
+
+  // Game over image centered, animated
+  const img = scene.add.image(GAME_WIDTH / 2, -200, 'game_over');
+  // Scale image to fit larger on screen (allow upscaling)
+  const maxW = GAME_WIDTH * 0.9;
+  const maxH = GAME_HEIGHT * 0.6;
+  const scale = Math.min(maxW / img.width, maxH / img.height);
+  img.setScale(scale);
+  img.setAlpha(0);
+  overlay.add(img);
+
+  const targetY = GAME_HEIGHT / 2;
+  scene.tweens.add({
+    targets: img,
+    y: targetY,
+    alpha: 1,
+    duration: 600,
+    ease: 'Back.easeOut'
+  });
+
+  // Buttons
+  const btnY = targetY + img.displayHeight / 2 + 40;
+  const makeButton = (label, x, onClick) => {
+    const w = 220;
+    const h = 64;
+    const button = scene.add.container(x, btnY);
+    const bg = scene.add.rectangle(0, 0, w, h, 0xffffff, 1).setStrokeStyle(4, 0x111111);
+    const txt = scene.add.text(0, 0, label, {
+      font: 'bold 28px Courier',
+      color: '#111'
+    }).setOrigin(0.5);
+    button.add([bg, txt]);
+    button.setSize(w, h);
+    button.setInteractive(new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h), Phaser.Geom.Rectangle.Contains);
+    button.on('pointerover', () => {
+      bg.setFillStyle(0xffcc00, 1);
+      txt.setColor('#000');
+    });
+    button.on('pointerout', () => {
+      bg.setFillStyle(0xffffff, 1);
+      txt.setColor('#111');
+    });
+    button.on('pointerdown', () => {
+      // reuse existing UI sfx for click
+      sfx('toastCollect');
+      onClick();
+    });
+    overlay.add(button);
+    return button;
+  };
+
+  // Retry: restart this scene cleanly
+  makeButton('Retry', GAME_WIDTH / 2 - 140, () => {
+    overlay.destroy();
+    scene.scene.restart();
+  });
+
+  // Quit: reload page (placeholder for a future main menu)
+  makeButton('Quit', GAME_WIDTH / 2 + 140, () => {
+    try {
+      window.location.href = window.location.href.split('?')[0];
+    } catch (_) {
+      scene.game.destroy(true);
+    }
+  });
+
+  // Attach to UI so UI camera renders it
+  scene.ui.add(overlay);
+  scene.gameOverUI = overlay;
+}
