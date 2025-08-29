@@ -158,7 +158,6 @@ export function showGameOver(scene) {
 
   // Game over image centered, animated
   const img = scene.add.image(GAME_WIDTH / 2, -200, 'game_over');
-  // Scale image to fit larger on screen (allow upscaling)
   const maxW = GAME_WIDTH * 0.9;
   const maxH = GAME_HEIGHT * 0.6;
   const scale = Math.min(maxW / img.width, maxH / img.height);
@@ -175,44 +174,32 @@ export function showGameOver(scene) {
     ease: 'Back.easeOut'
   });
 
-  // Buttons
+  // Buttons (styled like pause menu) side-by-side under the image
   const btnY = targetY + img.displayHeight / 2 + 40;
-  const makeButton = (label, x, onClick) => {
-    const w = 220;
-    const h = 64;
-    const button = scene.add.container(x, btnY);
-    const bg = scene.add.rectangle(0, 0, w, h, 0xffffff, 1).setStrokeStyle(4, 0x111111);
-    const txt = scene.add.text(0, 0, label, {
-      font: 'bold 28px Courier',
-      color: '#111'
-    }).setOrigin(0.5);
-    button.add([bg, txt]);
-    button.setSize(w, h);
-    button.setInteractive(new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h), Phaser.Geom.Rectangle.Contains);
-    button.on('pointerover', () => {
-      bg.setFillStyle(0xffcc00, 1);
-      txt.setColor('#000');
-    });
-    button.on('pointerout', () => {
-      bg.setFillStyle(0xffffff, 1);
-      txt.setColor('#111');
-    });
-    button.on('pointerdown', () => {
-      sfx('ui_select');
-      onClick();
-    });
-    overlay.add(button);
-    return button;
+  const makeButton = (label, x, y, onClick) => {
+    const w = Math.min(260, GAME_WIDTH * 0.35);
+    const h = 72;
+    const btn = scene.add.container(x, y);
+    const imgBtn = scene.add.image(0, 0, 'ui_btn02_1');
+    imgBtn.setDisplaySize(w, h);
+    const txt = scene.add.text(0, 0, label, { font: 'bold 26px Courier', color: '#111' }).setOrigin(0.5);
+    const zone = scene.add.zone(0, 0, w, h).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    btn.add([imgBtn, txt, zone]);
+    btn.setSize(w, h);
+    zone.on('pointerover', () => imgBtn.setTexture('ui_btn02_2'));
+    zone.on('pointerout', () => imgBtn.setTexture('ui_btn02_1'));
+    zone.on('pointerdown', () => { imgBtn.setTexture('ui_btn02_3'); sfx('ui_select'); });
+    zone.on('pointerup', () => { imgBtn.setTexture('ui_btn02_2'); onClick(); });
+    overlay.add(btn);
+    return btn;
   };
 
-  // Retry: restart this scene cleanly
-  makeButton('Retry', GAME_WIDTH / 2 - 140, () => {
+  const gap = 160; // horizontal spacing from center
+  makeButton('Retry', GAME_WIDTH / 2 - gap, btnY, () => {
     overlay.destroy();
     scene.scene.restart();
   });
-
-  // Quit: reload page (placeholder for a future main menu)
-  makeButton('Quit', GAME_WIDTH / 2 + 140, () => {
+  makeButton('Quit', GAME_WIDTH / 2 + gap, btnY, () => {
     try {
       window.location.href = window.location.href.split('?')[0];
     } catch (_) {
