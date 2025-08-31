@@ -40,6 +40,7 @@ const manifest = {
     { key: 'landEnemy', url: 'src/assets/audio/LandOnEnemy.wav' },
     { key: 'death', url: 'src/assets/audio/game-over-38511.mp3' },
     { key: 'respawn', url: 'src/assets/audio/a_bulldog_respawning.mp3' },
+    { key: 'levelSuccess', url: 'src/assets/audio/level_success.mp3' },
     { key: 'ui_select', url: 'src/assets/audio/select_002.ogg' }
   ],
   tilemaps: [
