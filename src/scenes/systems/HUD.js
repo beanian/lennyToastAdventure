@@ -62,6 +62,7 @@ export function createHUD(scene) {
   scene.showPauseMenu = () => showPauseMenu(scene);
   scene.hidePauseMenu = () => hidePauseMenu(scene);
   scene.togglePause = () => togglePause(scene);
+  scene.showLevelSuccess = time => showLevelSuccess(scene, time);
 }
 
 export function createHealthIcons(scene) {
@@ -210,6 +211,80 @@ export function showGameOver(scene) {
   // Attach to UI so UI camera renders it
   scene.ui.add(overlay);
   scene.gameOverUI = overlay;
+}
+
+export function showLevelSuccess(scene, timeTaken) {
+  const overlay = scene.add.container(0, 0).setScrollFactor(0).setDepth(10000);
+  const dim = scene.add
+    .rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6)
+    .setOrigin(0, 0);
+  overlay.add(dim);
+
+  const panelW = Math.min(720, GAME_WIDTH * 0.9);
+  const panelH = Math.min(440, GAME_HEIGHT * 0.85);
+  const panel = scene.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2 + panelH);
+  const panelBg = scene.add.image(0, 0, 'ui_frame');
+  panelBg.setDisplaySize(panelW, panelH);
+  const title = scene.add
+    .text(0, -panelH / 2 + 40, 'LEVEL COMPLETE', { font: 'bold 36px Courier', color: '#111' })
+    .setOrigin(0.5);
+  const toastTxt = scene.add
+    .text(0, -40, `Toasts: ${scene.toastCount}`, { font: 'bold 26px Courier', color: '#111' })
+    .setOrigin(0.5);
+  const timeTxt = scene.add
+    .text(0, 20, `Time: ${timeTaken.toFixed(2)}s`, { font: 'bold 26px Courier', color: '#111' })
+    .setOrigin(0.5);
+
+  panel.add([panelBg, title, toastTxt, timeTxt]);
+
+  const makeButton = (label, x, y, onClick) => {
+    const w = Math.min(260, panelW - 80);
+    const h = 72;
+    const btn = scene.add.container(x, y);
+    const imgBtn = scene.add.image(0, 0, 'ui_btn02_1');
+    imgBtn.setDisplaySize(w, h);
+    const txt = scene.add.text(0, 0, label, { font: 'bold 26px Courier', color: '#111' }).setOrigin(0.5);
+    const zone = scene.add.zone(0, 0, w, h).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    btn.add([imgBtn, txt, zone]);
+    btn.setSize(w, h);
+    zone.on('pointerover', () => imgBtn.setTexture('ui_btn02_2'));
+    zone.on('pointerout', () => imgBtn.setTexture('ui_btn02_1'));
+    zone.on('pointerdown', () => {
+      imgBtn.setTexture('ui_btn02_3');
+      sfx('ui_select');
+    });
+    zone.on('pointerup', () => {
+      imgBtn.setTexture('ui_btn02_2');
+      onClick();
+    });
+    return btn;
+  };
+
+  const btnY = panelH / 2 - 60;
+  const gap = 160;
+  panel.add(
+    makeButton('Next Level', -gap, btnY, () => {
+      overlay.destroy();
+      scene.scene.restart();
+    })
+  );
+  panel.add(
+    makeButton('Quit', gap, btnY, () => {
+      try {
+        window.location.href = window.location.href.split('?')[0];
+      } catch (_) {
+        scene.game.destroy(true);
+      }
+    })
+  );
+
+  overlay.add(panel);
+  overlay.setAlpha(0);
+  scene.tweens.add({ targets: overlay, alpha: 1, duration: 300 });
+  scene.tweens.add({ targets: panel, y: GAME_HEIGHT / 2, duration: 600, ease: 'Back.easeOut' });
+
+  scene.ui.add(overlay);
+  scene.levelSuccessUI = overlay;
 }
 
 export function showPauseMenu(scene) {

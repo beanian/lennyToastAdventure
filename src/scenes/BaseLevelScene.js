@@ -3,7 +3,7 @@ import Player from '../entities/Player.js';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants.js';
 import { init as audioInit, sfx, music } from '../AudioBus.js';
 import InputService from '../services/InputService.js';
-import { createHUD } from './systems/HUD.js';
+import { createHUD, showLevelSuccess } from './systems/HUD.js';
 import { setupDebug } from './systems/DebugHelpers.js';
 import { spawnEnemy, spawnCollectible } from './systems/Spawners.js';
 
@@ -15,6 +15,9 @@ export default class BaseLevelScene extends Phaser.Scene {
 
   create() {
     audioInit(this);
+    this.levelStartTime = this.time.now;
+    this.isLevelComplete = false;
+    this.levelEndZone = null;
     // --- Map + tiles ---
     const map = this.make.tilemap({ key: this.mapKey });
     const tiles = map.addTilesetImage(
@@ -193,7 +196,14 @@ export default class BaseLevelScene extends Phaser.Scene {
         const info = getInfo(obj);
         const x = obj.x;
         const y = obj.y - (obj.height || 0);
-        if (info.kind === 'sockroach') {
+        const w = obj.width || map.tileWidth;
+        const h = obj.height || map.tileHeight;
+        if (info.props.levelEnd) {
+          const zx = x + w / 2;
+          const zy = y + h / 2;
+          this.levelEndZone = this.add.zone(zx, zy, w, h);
+          this.physics.add.existing(this.levelEndZone, true);
+        } else if (info.kind === 'sockroach') {
           // Support optional pathName for polyline patrols; else fall back to patrolWidth or default
           spawnEnemy(this, 'sockroach', x, y, info.props, map, groundLayers);
         } else if (info.kind === 'toast') {
@@ -221,6 +231,15 @@ export default class BaseLevelScene extends Phaser.Scene {
   }
 
   update() {
+    if (this.isLevelComplete) return;
+    if (
+      this.levelEndZone &&
+      this.physics.overlap(this.player, this.levelEndZone) &&
+      this.inputService.upJustPressed()
+    ) {
+      this.levelComplete();
+      return;
+    }
     this.player.update();
     this.enemies.children.iterate(e => {
       if (!e || e.alive === false) return;
@@ -260,6 +279,26 @@ export default class BaseLevelScene extends Phaser.Scene {
           `anim:${anim} enemies:${this.enemies?.getLength?.() ?? 0}`
       );
     }
+  }
+
+  levelComplete() {
+    this.isLevelComplete = true;
+    this.physics.world.pause();
+    if (this.playerEnemyCollider) this.playerEnemyCollider.active = false;
+    if (this.player?.body) this.player.body.enable = false;
+    this.player.play('walk', true);
+    sfx('levelSuccess');
+    const targetX = this.levelEndZone?.x || this.player.x;
+    this.tweens.add({
+      targets: this.player,
+      x: targetX,
+      duration: 600,
+      onComplete: () => {
+        this.player.setVisible(false);
+        const elapsed = (this.time.now - this.levelStartTime) / 1000;
+        showLevelSuccess(this, elapsed);
+      }
+    });
   }
 
   handlePlayerEnemy(playerObj, enemy) {
