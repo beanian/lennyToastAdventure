@@ -31,14 +31,18 @@ export default class InputService {
     return this.cursors.right.isDown || padRight || this.mobile.right;
   }
 
-  jumpJustPressed() {
-    const keyboardJump = Phaser.Input.Keyboard.JustDown(this.cursors.up);
-    const padJump =
+  upJustPressed() {
+    const keyboardUp = Phaser.Input.Keyboard.JustDown(this.cursors.up);
+    const padUp =
       this.gamepad &&
       this.gamepad.A &&
       Phaser.Input.Gamepad.JustDown(this.gamepad.A);
     const mobileJump = this.mobile.jump && !this.mobilePrevJump;
     this.mobilePrevJump = this.mobile.jump;
-    return keyboardJump || padJump || mobileJump;
+    return keyboardUp || padUp || mobileJump;
+  }
+
+  jumpJustPressed() {
+    return this.upJustPressed();
   }
 }
