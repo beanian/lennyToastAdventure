@@ -304,7 +304,7 @@ export default class BaseLevelScene extends Phaser.Scene {
       onComplete: () => {
         this.player.setVisible(false);
         const elapsed = (this.time.now - this.levelStartTime) / 1000;
-        showLevelSuccess(this, elapsed);
+        showLevelSuccess(this, elapsed, this.mapKey || this.scene.key);
       }
     });
   }

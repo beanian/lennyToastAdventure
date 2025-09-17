@@ -7,7 +7,8 @@ document.title = `Lenny Toast Adventure ${VERSION}`;
 
 const config = {
   type: Phaser.AUTO,
-  parent: 'game-container',
+  parent: 'game-root',
+  width: GAME_WIDTH,
   pixelArt: true,
   backgroundColor: '#000000',
   scale: {
@@ -18,6 +19,7 @@ const config = {
   },
   // Camera zoom is managed in Level1Scene after the map loads
   input: { gamepad: true },
+  dom: { createContainer: true },
   physics: {
     default: 'arcade',
     arcade: { gravity: { y: 700 }, debug: DEBUG.enabled }

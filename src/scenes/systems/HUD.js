@@ -1,6 +1,7 @@
 /* global Phaser */
 import { GAME_WIDTH, GAME_HEIGHT } from '../../constants.js';
 import { sfx, getMusicVolume, setMusicVolume, getSfxVolume, setSfxVolume, previewMusicVolume, previewSfxVolume } from '../../AudioBus.js';
+import { getLeaderboard, addRun } from '../../services/LeaderboardService.js';
 
 export function createHUD(scene) {
   // Core state
@@ -62,7 +63,7 @@ export function createHUD(scene) {
   scene.showPauseMenu = () => showPauseMenu(scene);
   scene.hidePauseMenu = () => hidePauseMenu(scene);
   scene.togglePause = () => togglePause(scene);
-  scene.showLevelSuccess = time => showLevelSuccess(scene, time);
+  scene.showLevelSuccess = (time, levelId) => showLevelSuccess(scene, time, levelId);
 }
 
 export function createHealthIcons(scene) {
@@ -213,7 +214,26 @@ export function showGameOver(scene) {
   scene.gameOverUI = overlay;
 }
 
-export function showLevelSuccess(scene, timeTaken) {
+export function showLevelSuccess(scene, timeTaken, levelId) {
+  const resolvedLevelId = levelId || scene.mapKey || scene.scene.key || 'default';
+  const loadLastName = () => {
+    if (typeof window === 'undefined') return '';
+    try {
+      return window.localStorage?.getItem('lenny-toast-lastname') || '';
+    } catch (err) {
+      console.warn('Unable to load previous leaderboard name.', err);
+      return '';
+    }
+  };
+  const storeLastName = name => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage?.setItem('lenny-toast-lastname', name);
+    } catch (err) {
+      console.warn('Unable to store leaderboard name.', err);
+    }
+  };
+
   const overlay = scene.add.container(0, 0).setScrollFactor(0).setDepth(10000);
   const dim = scene.add
     .rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6)
@@ -221,7 +241,7 @@ export function showLevelSuccess(scene, timeTaken) {
   overlay.add(dim);
 
   const panelW = Math.min(720, GAME_WIDTH * 0.9);
-  const panelH = Math.min(440, GAME_HEIGHT * 0.85);
+  const panelH = Math.min(540, GAME_HEIGHT * 0.9);
   const panel = scene.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2 + panelH);
   const panelBg = scene.add.image(0, 0, 'ui_frame');
   panelBg.setDisplaySize(panelW, panelH);
@@ -235,10 +255,28 @@ export function showLevelSuccess(scene, timeTaken) {
     .text(0, 20, `Time: ${timeTaken.toFixed(2)}s`, { font: 'bold 26px Courier', color: '#111' })
     .setOrigin(0.5);
 
-  panel.add([panelBg, title, toastTxt, timeTxt]);
+  const leaderboardTitle = scene.add
+    .text(0, 70, 'FASTEST RUNS', { font: 'bold 24px Courier', color: '#111' })
+    .setOrigin(0.5, 0);
+  const leaderboardText = scene.add
+    .text(0, 110, '', {
+      font: '22px Courier',
+      color: '#111',
+      align: 'center'
+    })
+    .setOrigin(0.5, 0);
+
+  const saveStatus = scene.add
+    .text(0, panelH / 2 - 140, '', { font: '20px Courier', color: '#117722' })
+    .setOrigin(0.5);
+
+  panel.add([panelBg, title, toastTxt, timeTxt, leaderboardTitle, leaderboardText, saveStatus]);
+
+  // Compute a responsive button width that fits three side-by-side
+  const btnW = Math.min(260, Math.floor((panelW - 80) / 3));
 
   const makeButton = (label, x, y, onClick) => {
-    const w = Math.min(260, panelW - 80);
+    const w = btnW;
     const h = 72;
     const btn = scene.add.container(x, y);
     const imgBtn = scene.add.image(0, 0, 'ui_btn02_1');
@@ -250,33 +288,163 @@ export function showLevelSuccess(scene, timeTaken) {
     zone.on('pointerover', () => imgBtn.setTexture('ui_btn02_2'));
     zone.on('pointerout', () => imgBtn.setTexture('ui_btn02_1'));
     zone.on('pointerdown', () => {
+      if (!btn.enabled) return;
       imgBtn.setTexture('ui_btn02_3');
       sfx('ui_select');
     });
     zone.on('pointerup', () => {
+      if (!btn.enabled) return;
       imgBtn.setTexture('ui_btn02_2');
       onClick();
     });
+
+    btn.enabled = true;
+    btn.setEnabled = value => {
+      btn.enabled = value;
+      if (value) {
+        zone.setInteractive({ useHandCursor: true });
+        btn.setAlpha(1);
+      } else {
+        zone.disableInteractive();
+        btn.setAlpha(0.6);
+      }
+    };
+
     return btn;
   };
 
   const btnY = panelH / 2 - 60;
-  const gap = 160;
-  panel.add(
-    makeButton('Next Level', -gap, btnY, () => {
-      overlay.destroy();
-      scene.scene.restart();
-    })
-  );
-  panel.add(
-    makeButton('Quit', gap, btnY, () => {
+  let hasSavedRun = false;
+  let saveInFlight = false;
+
+  const formDom = scene.add
+    .dom(0, btnY - 110)
+    .createFromHTML(`
+      <form style="display:flex; gap:8px; align-items:center; font-family: Courier, monospace;">
+        <input
+          type="text"
+          name="playerName"
+          maxlength="20"
+          placeholder="Enter your name"
+          style="flex:1; padding:8px 10px; font-size:18px; border:2px solid #111; border-radius:6px;"
+        />
+        <button type="submit" style="padding:8px 16px; font-size:18px; border:2px solid #111; border-radius:6px; background:#ffcc00; cursor:pointer;">
+          Save
+        </button>
+      </form>
+    `);
+  formDom.setOrigin(0.5);
+  formDom.setVisible(false);
+  panel.add(formDom);
+
+  // Space buttons so they don't overlap: center-to-center >= width + padding
+  const gap = btnW + 20;
+  const nextBtn = makeButton('Next Level', -gap, btnY, () => {
+    overlay.destroy();
+    scene.scene.restart();
+  });
+  const saveBtn = makeButton('Save Run', 0, btnY, () => {
+    if (hasSavedRun) {
+      saveStatus.setColor('#117722');
+      saveStatus.setText('Run already saved.');
+      return;
+    }
+    if (!formDom) return;
+    formDom.setVisible(true);
+    saveStatus.setColor('#117722');
+    saveStatus.setText('');
+    const input = formDom.node.querySelector('input[name="playerName"]');
+    if (input) {
+      input.value = loadLastName();
+      input.focus();
+      input.select();
+    }
+  });
+  const quitBtn = makeButton('Quit', gap, btnY, () => {
+    try {
+      window.location.href = window.location.href.split('?')[0];
+    } catch (_) {
+      scene.game.destroy(true);
+    }
+  });
+
+  panel.add([nextBtn, saveBtn, quitBtn]);
+
+  const updateLeaderboardDisplay = entries => {
+    if (!entries || entries.length === 0) {
+      leaderboardText.setText('No runs saved yet.');
+      return;
+    }
+    const formatted = entries
+      .slice(0, 5)
+      .map((entry, index) => `${index + 1}. ${entry.name} - ${entry.time.toFixed(2)}s`)
+      .join('\n');
+    leaderboardText.setText(formatted);
+  };
+
+  const refreshLeaderboard = async () => {
+    leaderboardText.setText('Loading leaderboard...');
+    try {
+      const entries = await getLeaderboard(resolvedLevelId);
+      updateLeaderboardDisplay(entries);
+    } catch (err) {
+      console.error('Failed to load leaderboard.', err);
+      leaderboardText.setText('Unable to load leaderboard.');
+    }
+  };
+
+  refreshLeaderboard();
+
+  formDom.addListener('submit');
+  formDom.on('submit', event => {
+    event.preventDefault();
+    if (saveInFlight || hasSavedRun) return;
+
+    const input = event.target.querySelector('input[name="playerName"]');
+    const rawName = input?.value ?? '';
+    const trimmedName = rawName.trim();
+    if (!trimmedName) {
+      saveStatus.setColor('#aa1111');
+      saveStatus.setText('Please enter a name.');
+      return;
+    }
+
+    const sanitizedName = trimmedName.slice(0, 20);
+    saveInFlight = true;
+    saveBtn.setEnabled(false);
+    saveStatus.setColor('#117722');
+    saveStatus.setText('Saving run...');
+
+    (async () => {
       try {
-        window.location.href = window.location.href.split('?')[0];
-      } catch (_) {
-        scene.game.destroy(true);
+        const { entries, entry, rank } = await addRun(resolvedLevelId, sanitizedName, timeTaken);
+        updateLeaderboardDisplay(entries);
+        storeLastName(entry?.name || sanitizedName);
+        hasSavedRun = true;
+        formDom.setVisible(false);
+        if (typeof formDom.node.reset === 'function') formDom.node.reset();
+        if (rank > 0 && rank <= 5) {
+          saveStatus.setColor('#117722');
+          saveStatus.setText(`Run saved! New rank #${rank}.`);
+        } else if (rank > 0) {
+          saveStatus.setColor('#117722');
+          saveStatus.setText(`Run saved! Current rank #${rank}.`);
+        } else {
+          saveStatus.setColor('#117722');
+          saveStatus.setText('Run saved to leaderboard!');
+        }
+      } catch (err) {
+        console.error('Failed to save run to leaderboard.', err);
+        saveStatus.setColor('#aa1111');
+        saveStatus.setText('Unable to save run. Please try again.');
+        if (!hasSavedRun) {
+          saveBtn.setEnabled(true);
+        }
+      } finally {
+        saveInFlight = false;
       }
-    })
-  );
+    })();
+  });
 
   overlay.add(panel);
   overlay.setAlpha(0);
