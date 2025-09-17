@@ -10,7 +10,13 @@ const config = {
   parent: 'game-root',
   width: GAME_WIDTH,
   pixelArt: true,
-  height: GAME_HEIGHT,
+  backgroundColor: '#000000',
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT
+  },
   // Camera zoom is managed in Level1Scene after the map loads
   input: { gamepad: true },
   dom: { createContainer: true },
