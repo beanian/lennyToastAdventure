@@ -272,8 +272,11 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
 
   panel.add([panelBg, title, toastTxt, timeTxt, leaderboardTitle, leaderboardText, saveStatus]);
 
+  // Compute a responsive button width that fits three side-by-side
+  const btnW = Math.min(260, Math.floor((panelW - 80) / 3));
+
   const makeButton = (label, x, y, onClick) => {
-    const w = Math.min(260, panelW - 80);
+    const w = btnW;
     const h = 72;
     const btn = scene.add.container(x, y);
     const imgBtn = scene.add.image(0, 0, 'ui_btn02_1');
@@ -334,7 +337,8 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
   formDom.setVisible(false);
   panel.add(formDom);
 
-  const gap = 150;
+  // Space buttons so they don't overlap: center-to-center >= width + padding
+  const gap = btnW + 20;
   const nextBtn = makeButton('Next Level', -gap, btnY, () => {
     overlay.destroy();
     scene.scene.restart();
