@@ -312,6 +312,7 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
 
   const btnY = panelH / 2 - 60;
   let hasSavedRun = false;
+  let saveInFlight = false;
 
   const formDom = scene.add
     .dom(0, btnY - 110)
@@ -377,11 +378,24 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
     leaderboardText.setText(formatted);
   };
 
-  updateLeaderboardDisplay(getLeaderboard(resolvedLevelId));
+  const refreshLeaderboard = async () => {
+    leaderboardText.setText('Loading leaderboard...');
+    try {
+      const entries = await getLeaderboard(resolvedLevelId);
+      updateLeaderboardDisplay(entries);
+    } catch (err) {
+      console.error('Failed to load leaderboard.', err);
+      leaderboardText.setText('Unable to load leaderboard.');
+    }
+  };
+
+  refreshLeaderboard();
 
   formDom.addListener('submit');
   formDom.on('submit', event => {
     event.preventDefault();
+    if (saveInFlight || hasSavedRun) return;
+
     const input = event.target.querySelector('input[name="playerName"]');
     const rawName = input?.value ?? '';
     const trimmedName = rawName.trim();
@@ -392,23 +406,40 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
     }
 
     const sanitizedName = trimmedName.slice(0, 20);
-    const { entries, entry, rank } = addRun(resolvedLevelId, sanitizedName, timeTaken);
-    updateLeaderboardDisplay(entries);
-    storeLastName(entry?.name || sanitizedName);
-    hasSavedRun = true;
+    saveInFlight = true;
     saveBtn.setEnabled(false);
-    formDom.setVisible(false);
-    if (typeof formDom.node.reset === 'function') formDom.node.reset();
-    if (rank > 0 && rank <= 5) {
-      saveStatus.setColor('#117722');
-      saveStatus.setText(`Run saved! New rank #${rank}.`);
-    } else if (rank > 0) {
-      saveStatus.setColor('#117722');
-      saveStatus.setText(`Run saved! Current rank #${rank}.`);
-    } else {
-      saveStatus.setColor('#117722');
-      saveStatus.setText('Run saved to leaderboard!');
-    }
+    saveStatus.setColor('#117722');
+    saveStatus.setText('Saving run...');
+
+    (async () => {
+      try {
+        const { entries, entry, rank } = await addRun(resolvedLevelId, sanitizedName, timeTaken);
+        updateLeaderboardDisplay(entries);
+        storeLastName(entry?.name || sanitizedName);
+        hasSavedRun = true;
+        formDom.setVisible(false);
+        if (typeof formDom.node.reset === 'function') formDom.node.reset();
+        if (rank > 0 && rank <= 5) {
+          saveStatus.setColor('#117722');
+          saveStatus.setText(`Run saved! New rank #${rank}.`);
+        } else if (rank > 0) {
+          saveStatus.setColor('#117722');
+          saveStatus.setText(`Run saved! Current rank #${rank}.`);
+        } else {
+          saveStatus.setColor('#117722');
+          saveStatus.setText('Run saved to leaderboard!');
+        }
+      } catch (err) {
+        console.error('Failed to save run to leaderboard.', err);
+        saveStatus.setColor('#aa1111');
+        saveStatus.setText('Unable to save run. Please try again.');
+        if (!hasSavedRun) {
+          saveBtn.setEnabled(true);
+        }
+      } finally {
+        saveInFlight = false;
+      }
+    })();
   });
 
   overlay.add(panel);
