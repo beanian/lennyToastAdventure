@@ -3,7 +3,8 @@
   "version": "1.0.5",
   "description": "Pixel art side-scrolling game framework setup with Phaser.",
   "main": "index.js",
-  "scripts": {
+  "scripts": { "dev": "vite", "build": "vite build", "preview": "vite preview" },
+  "scripts7": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "http-server . -c-1"
   },
@@ -13,6 +14,7 @@
   "type": "commonjs",
   "devDependencies": {
     "http-server": "^14.1.1",
-    "phaser": "^3.90.0"
+    "phaser": "^3.90.0",
+    "vite": "^7.1.5"
   }
 }
