@@ -7,6 +7,7 @@ document.title = `Lenny Toast Adventure ${VERSION}`;
 
 const config = {
   type: Phaser.AUTO,
+  parent: 'game-root',
   width: GAME_WIDTH,
   pixelArt: true,
   height: GAME_HEIGHT,
