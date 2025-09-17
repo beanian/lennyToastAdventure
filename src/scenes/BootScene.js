@@ -1,4 +1,4 @@
-/* global Phaser */
+import Phaser from 'phaser';/* global Phaser */
 import manifest from '../assets/manifest.js';
 
 export default class BootScene extends Phaser.Scene {
