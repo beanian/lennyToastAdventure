@@ -6,6 +6,7 @@ import InputService from '../services/InputService.js';
 import { createHUD, showLevelSuccess } from './systems/HUD.js';
 import { setupDebug } from './systems/DebugHelpers.js';
 import { spawnEnemy, spawnCollectible } from './systems/Spawners.js';
+import MobileControls from '../services/MobileControls.js';
 
 export default class BaseLevelScene extends Phaser.Scene {
   constructor(key, mapKey) {
@@ -132,6 +133,13 @@ export default class BaseLevelScene extends Phaser.Scene {
     Player.createAnimations(this);
     // Enemy animations are created on demand in their class
     this.inputService = new InputService(this);
+    this.mobileControls = new MobileControls(this, this.inputService);
+    this.events.once('shutdown', () => {
+      this.mobileControls = null;
+    });
+    this.events.once('destroy', () => {
+      this.mobileControls = null;
+    });
     this.player = new Player(this, spawnX, spawnY, this.inputService);
     this.spawnPoint = { x: spawnX, y: spawnY };
 
