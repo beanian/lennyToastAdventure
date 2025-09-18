@@ -625,6 +625,8 @@ export function showPauseMenu(scene) {
   scene.physics.world.pause();
   if (scene.playerEnemyCollider) scene.playerEnemyCollider.active = false;
 
+  const resolvedLevelId = scene.mapKey || scene.scene.key || 'default';
+
   const overlay = scene.add.container(0, 0).setScrollFactor(0).setDepth(9000);
   const dim = scene.add
     .rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6)
@@ -660,6 +662,10 @@ export function showPauseMenu(scene) {
     return btn;
   };
 
+  let leaderboard;
+  let leaderboardEntries;
+  let refreshLeaderboard;
+
   // Main menu container
   const main = scene.add.container(0, 0);
   const rowY = -panelH / 2 + 120;
@@ -668,13 +674,18 @@ export function showPauseMenu(scene) {
     main.setVisible(false);
     options.setVisible(true);
   }));
-  main.add(makeButton('Retry', 0, rowY + 160, () => {
+  main.add(makeButton('Leaderboard', 0, rowY + 160, () => {
+    main.setVisible(false);
+    leaderboard.setVisible(true);
+    refreshLeaderboard();
+  }));
+  main.add(makeButton('Retry', 0, rowY + 240, () => {
     overlay.destroy();
     scene.isPaused = false;
     scene.physics.world.resume();
     scene.scene.restart();
   }));
-  main.add(makeButton('Quit', 0, rowY + 240, () => {
+  main.add(makeButton('Quit', 0, rowY + 320, () => {
     try { window.location.href = window.location.href.split('?')[0]; } catch (_) { scene.game.destroy(true); }
   }));
   panel.add(main);
@@ -741,6 +752,54 @@ export function showPauseMenu(scene) {
   });
   options.add(saveBack);
   panel.add(options);
+
+  // Leaderboard container (hidden initially)
+  leaderboard = scene.add.container(0, 0);
+  leaderboard.setVisible(false);
+  const leaderboardTitle = scene.add
+    .text(0, -panelH / 2 + 110, 'LEADERBOARD', { font: 'bold 28px Courier', color: '#111' })
+    .setOrigin(0.5);
+  leaderboardEntries = scene.add
+    .text(-panelW / 2 + 40, -panelH / 2 + 160, 'Loading leaderboard...', {
+      font: '20px Courier',
+      color: '#111',
+      align: 'left'
+    })
+    .setOrigin(0, 0);
+  leaderboardEntries.setWordWrapWidth(panelW - 80);
+  leaderboardEntries.setLineSpacing(6);
+  const leaderboardBack = makeButton('Back', 0, panelH / 2 - 80, () => {
+    leaderboard.setVisible(false);
+    main.setVisible(true);
+  });
+  leaderboard.add([leaderboardTitle, leaderboardEntries, leaderboardBack]);
+  panel.add(leaderboard);
+
+  const updateLeaderboardDisplay = entries => {
+    if (!entries || entries.length === 0) {
+      leaderboardEntries.setText('No runs saved yet.');
+      return;
+    }
+
+    const formatted = entries
+      .slice(0, 25)
+      .map((entry, index) => `${String(index + 1).padStart(2, '0')}. ${entry.name} - ${entry.time.toFixed(2)}s`)
+      .join('\n');
+    leaderboardEntries.setText(formatted);
+  };
+
+  refreshLeaderboard = () => {
+    leaderboardEntries.setText('Loading leaderboard...');
+    (async () => {
+      try {
+        const entries = await getLeaderboard(resolvedLevelId);
+        updateLeaderboardDisplay(entries);
+      } catch (err) {
+        console.error('Failed to load leaderboard.', err);
+        leaderboardEntries.setText('Unable to load leaderboard.');
+      }
+    })();
+  };
 
   overlay.add(panel);
   scene.ui.add(overlay);
