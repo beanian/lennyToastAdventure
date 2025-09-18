@@ -24,6 +24,7 @@ const manifest = {
     { key: 'toast', url: new URL('./sprites/toast/toast_sprite.png', import.meta.url).href },
     { key: 'lenny_face', url: new URL('./sprites/lenny/lenny_face.png', import.meta.url).href },
     { key: 'game_over', url: new URL('./sprites/game/game_over.png', import.meta.url).href },
+    { key: 'welcome_screen', url: new URL('./sprites/game/welcome_screen.png', import.meta.url).href },
     { key: 'tiles', url: new URL('../levels/level1/nature-paltformer-tileset-16x16.png', import.meta.url).href },
     { key: 'ui_frame', url: new URL('./ui/Sprites/UI_Flat_Frame02a.png', import.meta.url).href },
     { key: 'ui_btn02_1', url: new URL('./ui/Sprites/UI_Flat_Button02a_1.png', import.meta.url).href },

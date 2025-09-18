@@ -1,6 +1,7 @@
 import { VERSION, GAME_WIDTH, GAME_HEIGHT, DEBUG } from './constants.js';
 import BootScene from './scenes/BootScene.js';
 import PreloadScene from './scenes/PreloadScene.js';
+import WelcomeScene from './scenes/WelcomeScene.js';
 import Level1Scene from './scenes/Level1Scene.js';
 
 document.title = `Lenny Toast Adventure ${VERSION}`;
@@ -24,7 +25,7 @@ const config = {
     default: 'arcade',
     arcade: { gravity: { y: 700 }, debug: DEBUG.enabled }
   },
-  scene: [BootScene, PreloadScene, Level1Scene]
+  scene: [BootScene, PreloadScene, WelcomeScene, Level1Scene]
 };
 
 new Phaser.Game(config);
