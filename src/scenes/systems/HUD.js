@@ -653,7 +653,7 @@ export function showPauseMenu(scene) {
 
   // Panel shell
   const panelW = Math.min(720, GAME_WIDTH * 0.9);
-  const panelH = Math.min(440, GAME_HEIGHT * 0.85);
+  const panelH = Math.min(540, GAME_HEIGHT * 0.9);
   const panelX = GAME_WIDTH / 2;
   const panelY = GAME_HEIGHT / 2;
   const panel = scene.add.container(panelX, panelY);
@@ -777,7 +777,7 @@ export function showPauseMenu(scene) {
 
   // Leaderboard container (hidden initially)
   const tableWidth = Math.max(200, panelW - 120);
-  const tableHeight = Math.max(160, panelH - 240);
+  const tableHeight = Math.max(220, panelH - 260);
   leaderboard = scene.add.container(0, 0);
   leaderboard.setVisible(false);
   const leaderboardTitle = scene.add
@@ -812,7 +812,7 @@ export function showPauseMenu(scene) {
       </table>
     </div>
   `;
-  const leaderboardDom = scene.add.dom(0, -panelH / 2 + 190).createFromHTML(leaderboardHtml);
+  const leaderboardDom = scene.add.dom(0, -panelH / 2 + 200).createFromHTML(leaderboardHtml);
   leaderboardDom.setOrigin(0.5, 0);
   let leaderboardBodyEl = leaderboardDom?.node?.querySelector('.leaderboard-body') || null;
 
