@@ -270,8 +270,8 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
 
   const safeMargin = Math.max(32, GAME_HEIGHT * 0.08);
   const panelMaxHeight = GAME_HEIGHT - safeMargin * 2;
-  const panelW = Math.min(760, GAME_WIDTH * 0.9);
-  const desiredPanelH = 620;
+  const panelW = Math.min(900, GAME_WIDTH * 0.95);
+  const desiredPanelH = 720;
   let panelH = Math.min(desiredPanelH, panelMaxHeight);
   if (panelMaxHeight >= 420) {
     panelH = Math.max(panelH, 420);
@@ -291,7 +291,9 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
   const rawTime = stats.rawLevelTime > 0 ? stats.rawLevelTime : timeTaken;
   const toastSavings = toastCount * 0.1;
   const sockroachSavings = sockroachKills * 0.25;
-  const finalTime = Math.max(0, rawTime - toastSavings - sockroachSavings);
+  const livesLost = stats.livesLost || 0;
+  const lifePenalty = livesLost * 1;
+  const finalTime = Math.max(0, rawTime - toastSavings - sockroachSavings + lifePenalty);
   const formatSeconds = value => `${value.toFixed(2)}s`;
 
   const buttonHeight = 72;
@@ -327,9 +329,13 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
           <span style="flex:1; min-width:0;">Sockroaches defeated</span>
           <span style="text-align:right; white-space:nowrap;">${sockroachKills}</span>
         </div>
+        <div style="display:flex; justify-content:space-between; gap:12px; font-size:22px; font-weight:bold;">
+          <span style="flex:1; min-width:0;">Lives lost</span>
+          <span style="text-align:right; white-space:nowrap;">${livesLost}</span>
+        </div>
       </section>
       <section style="margin-bottom:18px;">
-        <h3 style="margin:0 0 12px; font-size:24px; font-weight:bold; text-align:left;">Time Savings</h3>
+        <h3 style="margin:0 0 12px; font-size:24px; font-weight:bold; text-align:left;">Time Adjustments</h3>
         <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:8px; font-size:20px;">
           <span style="flex:1; min-width:0;">Time saved (toasts)</span>
           <span style="text-align:right; white-space:nowrap;">${toastCount} × 0.10s = ${toastSavings.toFixed(2)}s</span>
@@ -337,6 +343,10 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
         <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; font-size:20px;">
           <span style="flex:1; min-width:0;">Time saved (Sockroaches)</span>
           <span style="text-align:right; white-space:nowrap;">${sockroachKills} × 0.25s = ${sockroachSavings.toFixed(2)}s</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; font-size:20px; color:#aa1111;">
+          <span style="flex:1; min-width:0;">Time penalty (lives lost)</span>
+          <span style="text-align:right; white-space:nowrap;">${livesLost} × 1.00s = ${lifePenalty.toFixed(2)}s</span>
         </div>
         <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:6px; font-size:20px;">
           <span style="flex:1; min-width:0;">Raw time</span>
