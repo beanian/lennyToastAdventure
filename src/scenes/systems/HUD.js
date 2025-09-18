@@ -370,19 +370,7 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
         </div>
       </section>
       <section style="margin-bottom:18px;">
-        <h3 style="margin:0 0 12px; font-size:24px; font-weight:bold; text-align:left;">Time Adjustments</h3>
-        <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:8px; font-size:20px;">
-          <span style="flex:1; min-width:0;">Time saved (toasts)</span>
-          <span style="text-align:right; white-space:nowrap;">${toastCount} × 0.10s = ${toastSavings.toFixed(2)}s</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; font-size:20px;">
-          <span style="flex:1; min-width:0;">Time saved (Sockroaches)</span>
-          <span style="text-align:right; white-space:nowrap;">${sockroachKills} × 0.25s = ${sockroachSavings.toFixed(2)}s</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; font-size:20px; color:#aa1111;">
-          <span style="flex:1; min-width:0;">Time penalty (lives lost)</span>
-          <span style="text-align:right; white-space:nowrap;">${livesLost} × 1.00s = ${lifePenalty.toFixed(2)}s</span>
-        </div>
+        <h3 style="margin:0 0 12px; font-size:24px; font-weight:bold; text-align:left;">Time</h3>
         <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:6px; font-size:20px;">
           <span style="flex:1; min-width:0;">Raw time</span>
           <span style="text-align:right; white-space:nowrap;">${formatSeconds(rawTime)}</span>
@@ -391,6 +379,23 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
           <span style="flex:1; min-width:0;">Final time</span>
           <span style="text-align:right; white-space:nowrap;">${formatSeconds(finalTime)}</span>
         </div>
+        <details style="margin-top:14px; font-size:18px;">
+          <summary style="cursor:pointer; font-size:20px; font-weight:bold;">Show calculation</summary>
+          <div style="margin-top:12px;">
+            <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:8px; font-size:20px;">
+              <span style="flex:1; min-width:0;">Time saved (toasts)</span>
+              <span style="text-align:right; white-space:nowrap;">${toastCount} × 0.10s = ${toastSavings.toFixed(2)}s</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; font-size:20px;">
+              <span style="flex:1; min-width:0;">Time saved (Sockroaches)</span>
+              <span style="text-align:right; white-space:nowrap;">${sockroachKills} × 0.25s = ${sockroachSavings.toFixed(2)}s</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; font-size:20px; color:#aa1111;">
+              <span style="flex:1; min-width:0;">Time penalty (lives lost)</span>
+              <span style="text-align:right; white-space:nowrap;">${livesLost} × 1.00s = ${lifePenalty.toFixed(2)}s</span>
+            </div>
+          </div>
+        </details>
       </section>
       <section>
         <h3 style="margin:0 0 12px; font-size:24px; font-weight:bold; text-align:left;">Fastest Runs</h3>
