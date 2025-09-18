@@ -547,6 +547,8 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
     try {
       const entries = await getLeaderboard(resolvedLevelId);
       updateLeaderboardDisplay(entries);
+      scene.latestLeaderboardEntries = entries;
+      scene.latestLeaderboardLevelId = resolvedLevelId;
     } catch (err) {
       console.error('Failed to load leaderboard.', err);
       if (leaderboardEntriesEl) {
@@ -581,6 +583,8 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
       try {
         const { entries, entry, rank } = await addRun(resolvedLevelId, sanitizedName, finalTime);
         updateLeaderboardDisplay(entries);
+        scene.latestLeaderboardEntries = entries;
+        scene.latestLeaderboardLevelId = resolvedLevelId;
         storeLastName(entry?.name || sanitizedName);
         hasSavedRun = true;
         formDom.setVisible(false);
@@ -814,29 +818,84 @@ export function showPauseMenu(scene) {
   panel.add(leaderboard);
 
   const updateLeaderboardDisplay = entries => {
-    if (!entries || entries.length === 0) {
+    const normalized = Array.isArray(entries) ? entries : [];
+    if (normalized.length === 0) {
       leaderboardEntries.setText('No runs saved yet.');
       return;
     }
 
-    const formatted = entries
+    const formatted = normalized
       .slice(0, 25)
-      .map((entry, index) => `${String(index + 1).padStart(2, '0')}. ${entry.name} - ${entry.time.toFixed(2)}s`)
+      .map((entry, index) => `${String(index + 1).padStart(2, '0')}. ${entry.name} - ${formatTimer(entry.time)}`)
       .join('\n');
     leaderboardEntries.setText(formatted);
   };
 
-  refreshLeaderboard = () => {
-    leaderboardEntries.setText('Loading leaderboard...');
-    (async () => {
+  const resolveLeaderboardIds = () => {
+    const ids = [];
+    if (resolvedLevelId) ids.push(resolvedLevelId);
+    const mapKey = scene.mapKey;
+    if (mapKey && !ids.includes(mapKey)) ids.push(mapKey);
+    const sceneKey = scene.scene?.key;
+    if (sceneKey && !ids.includes(sceneKey)) ids.push(sceneKey);
+    const cachedId = scene.latestLeaderboardLevelId;
+    if (cachedId && !ids.includes(cachedId)) ids.push(cachedId);
+    if (ids.length === 0) ids.push('default');
+    return ids;
+  };
+
+  const showCachedLeaderboardIfAvailable = idsToTry => {
+    if (
+      scene.latestLeaderboardEntries &&
+      Array.isArray(scene.latestLeaderboardEntries) &&
+      scene.latestLeaderboardEntries.length > 0 &&
+      scene.latestLeaderboardLevelId &&
+      idsToTry.includes(scene.latestLeaderboardLevelId)
+    ) {
+      updateLeaderboardDisplay(scene.latestLeaderboardEntries);
+      return true;
+    }
+    return false;
+  };
+
+  refreshLeaderboard = async () => {
+    const idsToTry = resolveLeaderboardIds();
+    const showedCached = showCachedLeaderboardIfAvailable(idsToTry);
+    if (!showedCached) {
+      leaderboardEntries.setText('Loading leaderboard...');
+    }
+
+    let finalEntries = null;
+    let lastError = null;
+    for (const levelId of idsToTry) {
       try {
-        const entries = await getLeaderboard(resolvedLevelId);
-        updateLeaderboardDisplay(entries);
+        const entries = await getLeaderboard(levelId);
+        if (!Array.isArray(entries)) continue;
+        if (!finalEntries || finalEntries.length === 0) {
+          finalEntries = entries;
+        }
+        if (entries.length > 0) {
+          finalEntries = entries;
+          scene.latestLeaderboardEntries = entries;
+          scene.latestLeaderboardLevelId = levelId;
+          break;
+        }
       } catch (err) {
-        console.error('Failed to load leaderboard.', err);
-        leaderboardEntries.setText('Unable to load leaderboard.');
+        lastError = err;
       }
-    })();
+    }
+
+    if (finalEntries) {
+      updateLeaderboardDisplay(finalEntries);
+      return;
+    }
+
+    if (lastError) {
+      console.error('Failed to load leaderboard.', lastError);
+      leaderboardEntries.setText('Unable to load leaderboard.');
+    } else {
+      leaderboardEntries.setText('No runs saved yet.');
+    }
   };
 
   if (scene.pauseOverlayCleanup) {
