@@ -777,7 +777,7 @@ export function showPauseMenu(scene) {
 
   // Leaderboard container (hidden initially)
   const tableWidth = Math.max(200, panelW - 120);
-  const tableHeight = Math.max(220, panelH - 260);
+  const tableHeight = Math.max(220, panelH - 325);
   leaderboard = scene.add.container(0, 0);
   leaderboard.setVisible(false);
   const leaderboardTitle = scene.add
