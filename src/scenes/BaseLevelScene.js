@@ -7,6 +7,7 @@ import { createHUD, showLevelSuccess } from './systems/HUD.js';
 import { setupDebug } from './systems/DebugHelpers.js';
 import { spawnEnemy, spawnCollectible } from './systems/Spawners.js';
 import MobileControls from '../services/MobileControls.js';
+import { resetLevelStats, addSockroachKill, setRawLevelTime } from '../services/LevelStats.js';
 
 export default class BaseLevelScene extends Phaser.Scene {
   constructor(key, mapKey) {
@@ -19,6 +20,8 @@ export default class BaseLevelScene extends Phaser.Scene {
     this.levelStartTime = this.time.now;
     this.isLevelComplete = false;
     this.levelEndZone = null;
+    resetLevelStats();
+    this.sockroachKills = 0;
     // --- Map + tiles ---
     const map = this.make.tilemap({ key: this.mapKey });
     const tiles = map.addTilesetImage(
@@ -304,6 +307,7 @@ export default class BaseLevelScene extends Phaser.Scene {
       onComplete: () => {
         this.player.setVisible(false);
         const elapsed = (this.time.now - this.levelStartTime) / 1000;
+        setRawLevelTime(elapsed);
         showLevelSuccess(this, elapsed, this.mapKey || this.scene.key);
       }
     });
@@ -327,6 +331,7 @@ export default class BaseLevelScene extends Phaser.Scene {
       playerObj.setVelocityY(-300);
       enemy.body.checkCollision.none = true;
       enemy.setCollideWorldBounds(false);
+      this.sockroachKills = addSockroachKill();
       enemy.once('animationcomplete-sockroach_stomp', () => {
         enemy.setVelocityY(-200);
         this.time.delayedCall(1000, () => enemy.destroy());
