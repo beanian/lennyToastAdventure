@@ -25,6 +25,41 @@ export function createHUD(scene) {
   // UI container pinned to screen
   scene.ui = scene.add.container(0, 0).setScrollFactor(0).setDepth(10);
 
+  // Discreet pause button for touch-friendly pause access
+  const touchManager = scene.input?.manager?.touch;
+  const hasTouchSupport = !!(touchManager && touchManager.supported);
+  if (hasTouchSupport) {
+    const btnSize = 72;
+    const btn = scene.add.container(GAME_WIDTH - btnSize / 2 - 12, btnSize / 2 + 12);
+    btn.setScrollFactor(0).setDepth(15);
+
+    const bg = scene.add.image(0, 0, 'ui_btn02_1');
+    bg.setDisplaySize(btnSize, btnSize);
+    bg.setAlpha(0.65);
+
+    const icon = scene.add.text(0, 0, 'II', { font: 'bold 28px Courier', color: '#111' }).setOrigin(0.5);
+
+    const zone = scene.add
+      .zone(0, 0, btnSize, btnSize)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+
+    zone.on('pointerover', () => bg.setTexture('ui_btn02_2'));
+    zone.on('pointerout', () => bg.setTexture('ui_btn02_1'));
+    zone.on('pointerdown', () => {
+      bg.setTexture('ui_btn02_3');
+      sfx('ui_select');
+    });
+    zone.on('pointerup', () => {
+      bg.setTexture('ui_btn02_1');
+      scene.togglePause();
+    });
+
+    btn.add([bg, icon, zone]);
+    scene.ui.add(btn);
+    scene.pauseButton = btn;
+  }
+
   // Health icons
   createHealthIcons(scene);
 
@@ -564,6 +599,7 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
 export function showPauseMenu(scene) {
   if (scene.isDead || scene.isPaused) return;
   scene.isPaused = true;
+  if (scene.pauseButton) scene.pauseButton.setVisible(false);
   // Pause physics to freeze gameplay, keep timers/tweens active for UI
   scene.physics.world.pause();
   if (scene.playerEnemyCollider) scene.playerEnemyCollider.active = false;
@@ -693,6 +729,7 @@ export function showPauseMenu(scene) {
 export function hidePauseMenu(scene) {
   if (!scene.isPaused) return;
   scene.isPaused = false;
+  if (scene.pauseButton) scene.pauseButton.setVisible(true);
   if (scene.pauseUI) {
     scene.pauseUI.destroy();
     scene.pauseUI = null;
