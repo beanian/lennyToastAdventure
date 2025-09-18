@@ -11,6 +11,33 @@
     :root {
       color-scheme: dark;
       --controls-padding: clamp(12px, 3vw, 32px);
+      --controls-layout-gap: clamp(12px, 5vw, 48px);
+      --controls-cluster-gap: clamp(12px, 4vw, 36px);
+      --controls-dpad-gap: clamp(8px, 3vw, 28px);
+      --controls-button-size: clamp(64px, 18vmin, 120px);
+      --controls-button-font: clamp(24px, 7vmin, 44px);
+    }
+
+    @media (orientation: landscape) and (max-height: 600px) {
+      :root {
+        --controls-padding: clamp(10px, 4vh, 24px);
+        --controls-layout-gap: clamp(10px, 8vh, 32px);
+        --controls-cluster-gap: clamp(8px, 6vh, 28px);
+        --controls-dpad-gap: clamp(6px, 5vh, 24px);
+        --controls-button-size: clamp(48px, 14vh, 88px);
+        --controls-button-font: clamp(18px, 6vh, 32px);
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 480px) {
+      :root {
+        --controls-padding: clamp(8px, 5vh, 20px);
+        --controls-layout-gap: clamp(8px, 6vh, 24px);
+        --controls-cluster-gap: clamp(6px, 5vh, 20px);
+        --controls-dpad-gap: clamp(6px, 4vh, 18px);
+        --controls-button-size: clamp(44px, 12vh, 72px);
+        --controls-button-font: clamp(16px, 5vh, 28px);
+      }
     }
 
     html,
@@ -61,7 +88,7 @@
       padding-right: calc(var(--controls-padding) + env(safe-area-inset-right));
       padding-top: calc(var(--controls-padding) + env(safe-area-inset-top));
       pointer-events: none;
-      gap: clamp(12px, 5vw, 48px);
+      gap: var(--controls-layout-gap);
     }
 
     .mobile-controls--visible {
@@ -70,24 +97,24 @@
 
     .mobile-controls__cluster {
       display: flex;
-      gap: clamp(12px, 4vw, 36px);
+      gap: var(--controls-cluster-gap);
       pointer-events: auto;
     }
 
     .mobile-controls__cluster--dpad {
-      gap: clamp(8px, 3vw, 28px);
+      gap: var(--controls-dpad-gap);
     }
 
     .mobile-controls__button {
-      width: clamp(64px, 18vw, 120px);
-      height: clamp(64px, 18vw, 120px);
+      width: var(--controls-button-size);
+      height: var(--controls-button-size);
       border-radius: 50%;
       border: 2px solid rgba(255, 255, 255, 0.3);
       margin: 0;
       padding: 0;
       background: rgba(18, 20, 28, 0.75);
       color: rgba(255, 255, 255, 0.9);
-      font-size: clamp(24px, 7vw, 44px);
+      font-size: var(--controls-button-font);
       font-weight: bold;
       display: flex;
       align-items: center;
