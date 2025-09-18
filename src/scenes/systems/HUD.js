@@ -513,7 +513,7 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
       return;
     }
     const formatted = entries
-      .slice(0, 5)
+      .slice(0, 10)
       .map((entry, index) => `${index + 1}. ${entry.name} - ${entry.time.toFixed(2)}s`)
       .join('\n');
     leaderboardEntriesEl.textContent = formatted;
