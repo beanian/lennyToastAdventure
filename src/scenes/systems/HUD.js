@@ -14,6 +14,26 @@ const formatTimer = seconds => {
   return `${minutes}:${paddedSecs}.${tenths}`;
 };
 
+const escapeHtml = value => {
+  if (value === null || value === undefined) return '';
+  return String(value).replace(/[&<>"']/g, char => {
+    switch (char) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '"':
+        return '&quot;';
+      case "'":
+        return '&#39;';
+      default:
+        return char;
+    }
+  });
+};
+
 export function createHUD(scene) {
   // Core state
   scene.health = 3;
@@ -641,6 +661,7 @@ export function showPauseMenu(scene) {
   panelBg.setDisplaySize(panelW, panelH);
   const title = scene.add.text(0, -panelH / 2 + 40, 'PAUSED', { font: 'bold 36px Courier', color: '#111' }).setOrigin(0.5);
   panel.add([panelBg, title]);
+  const resolvedLevelId = scene.levelId || scene.mapKey || scene.scene?.key || 'default';
 
   // Helper to make a button
   const makeButton = (label, x, y, onClick) => {
@@ -660,6 +681,9 @@ export function showPauseMenu(scene) {
     return btn;
   };
 
+  let refreshPauseLeaderboard = () => {};
+  let leaderboard;
+
   // Main menu container
   const main = scene.add.container(0, 0);
   const rowY = -panelH / 2 + 120;
@@ -668,13 +692,20 @@ export function showPauseMenu(scene) {
     main.setVisible(false);
     options.setVisible(true);
   }));
-  main.add(makeButton('Retry', 0, rowY + 160, () => {
+  main.add(makeButton('Leaderboard', 0, rowY + 160, () => {
+    main.setVisible(false);
+    options.setVisible(false);
+    leaderboard.setVisible(true);
+    title.setText('LEADERBOARD');
+    refreshPauseLeaderboard();
+  }));
+  main.add(makeButton('Retry', 0, rowY + 240, () => {
     overlay.destroy();
     scene.isPaused = false;
     scene.physics.world.resume();
     scene.scene.restart();
   }));
-  main.add(makeButton('Quit', 0, rowY + 240, () => {
+  main.add(makeButton('Quit', 0, rowY + 320, () => {
     try { window.location.href = window.location.href.split('?')[0]; } catch (_) { scene.game.destroy(true); }
   }));
   panel.add(main);
@@ -738,9 +769,111 @@ export function showPauseMenu(scene) {
     setSfxVolume(pendingSfx);
     options.setVisible(false);
     main.setVisible(true);
+    if (leaderboard) leaderboard.setVisible(false);
+    title.setText('PAUSED');
   });
   options.add(saveBack);
   panel.add(options);
+
+  // Leaderboard container (hidden initially)
+  const tableWidth = Math.max(200, panelW - 120);
+  const tableHeight = Math.max(160, panelH - 240);
+  leaderboard = scene.add.container(0, 0);
+  leaderboard.setVisible(false);
+  const leaderboardTitle = scene.add
+    .text(0, -panelH / 2 + 110, 'LEADERBOARD', { font: 'bold 28px Courier', color: '#111' })
+    .setOrigin(0.5);
+  const leaderboardSubtitle = scene.add
+    .text(0, -panelH / 2 + 150, 'Top 25 fastest runs', { font: '20px Courier', color: '#111' })
+    .setOrigin(0.5);
+  const leaderboardHtml = `
+    <div style="
+      width:${Math.floor(tableWidth)}px;
+      max-height:${Math.floor(tableHeight)}px;
+      overflow-y:auto;
+      padding-right:8px;
+      box-sizing:border-box;
+      font-family: Courier, monospace;
+      color:#111;
+    ">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="position:sticky; top:0; background:#f5f1e6; box-shadow:0 2px 0 rgba(0,0,0,0.1);">
+            <th style="text-align:left; padding:6px 8px; font-size:20px; border-bottom:2px solid #bca77d; width:20%;">Rank</th>
+            <th style="text-align:left; padding:6px 8px; font-size:20px; border-bottom:2px solid #bca77d;">Player</th>
+            <th style="text-align:right; padding:6px 8px; font-size:20px; border-bottom:2px solid #bca77d; width:25%;">Time</th>
+          </tr>
+        </thead>
+        <tbody class="leaderboard-body">
+          <tr>
+            <td colspan="3" style="padding:12px 8px; text-align:center; font-size:20px;">Loading leaderboard...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+  const leaderboardDom = scene.add.dom(0, -panelH / 2 + 190).createFromHTML(leaderboardHtml);
+  leaderboardDom.setOrigin(0.5, 0);
+  let leaderboardBodyEl = leaderboardDom?.node?.querySelector('.leaderboard-body') || null;
+
+  const setLeaderboardMessage = message => {
+    if (!leaderboardBodyEl) return;
+    leaderboardBodyEl.innerHTML = `
+      <tr>
+        <td colspan="3" style="padding:12px 8px; text-align:center; font-size:20px;">${escapeHtml(message)}</td>
+      </tr>
+    `;
+  };
+
+  const updatePauseLeaderboardDisplay = entries => {
+    if (!leaderboardBodyEl) return;
+    if (!entries || entries.length === 0) {
+      setLeaderboardMessage('No runs saved yet.');
+      return;
+    }
+    const rows = entries
+      .slice(0, 25)
+      .map((entry, index) => {
+        const rank = `${index + 1}.`;
+        const name = escapeHtml(entry.name || 'Player');
+        const time = `${(Number(entry.time) || 0).toFixed(2)}s`;
+        return `
+          <tr>
+            <td style="padding:6px 8px; font-size:20px; text-align:right; font-weight:bold;">${rank}</td>
+            <td style="padding:6px 8px; font-size:20px; text-align:left; max-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${name}</td>
+            <td style="padding:6px 8px; font-size:20px; text-align:right;">${time}</td>
+          </tr>
+        `;
+      })
+      .join('');
+    leaderboardBodyEl.innerHTML = rows;
+  };
+
+  let pauseLeaderboardLoading = false;
+  refreshPauseLeaderboard = async () => {
+    if (pauseLeaderboardLoading) return;
+    pauseLeaderboardLoading = true;
+    setLeaderboardMessage('Loading leaderboard...');
+    try {
+      const entries = await getLeaderboard(resolvedLevelId);
+      updatePauseLeaderboardDisplay(entries);
+    } catch (err) {
+      console.error('Failed to load pause leaderboard.', err);
+      setLeaderboardMessage('Unable to load leaderboard.');
+    } finally {
+      pauseLeaderboardLoading = false;
+    }
+  };
+
+  const leaderboardBack = makeButton('Back', 0, panelH / 2 - 80, () => {
+    leaderboard.setVisible(false);
+    options.setVisible(false);
+    main.setVisible(true);
+    title.setText('PAUSED');
+  });
+
+  leaderboard.add([leaderboardTitle, leaderboardSubtitle, leaderboardDom, leaderboardBack]);
+  panel.add(leaderboard);
 
   overlay.add(panel);
   scene.ui.add(overlay);
