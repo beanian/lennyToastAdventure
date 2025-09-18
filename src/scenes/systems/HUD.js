@@ -547,6 +547,8 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
     try {
       const entries = await getLeaderboard(resolvedLevelId);
       updateLeaderboardDisplay(entries);
+      scene.latestLeaderboardEntries = entries;
+      scene.latestLeaderboardLevelId = resolvedLevelId;
     } catch (err) {
       console.error('Failed to load leaderboard.', err);
       if (leaderboardEntriesEl) {
@@ -581,6 +583,8 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
       try {
         const { entries, entry, rank } = await addRun(resolvedLevelId, sanitizedName, finalTime);
         updateLeaderboardDisplay(entries);
+        scene.latestLeaderboardEntries = entries;
+        scene.latestLeaderboardLevelId = resolvedLevelId;
         storeLastName(entry?.name || sanitizedName);
         hasSavedRun = true;
         formDom.setVisible(false);
@@ -625,6 +629,8 @@ export function showPauseMenu(scene) {
   scene.physics.world.pause();
   if (scene.playerEnemyCollider) scene.playerEnemyCollider.active = false;
 
+  const resolvedLevelId = scene.mapKey || scene.scene.key || 'default';
+
   const overlay = scene.add.container(0, 0).setScrollFactor(0).setDepth(9000);
   const dim = scene.add
     .rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6)
@@ -633,23 +639,23 @@ export function showPauseMenu(scene) {
 
   // Panel shell
   const panelW = Math.min(720, GAME_WIDTH * 0.9);
-  const panelH = Math.min(440, GAME_HEIGHT * 0.85);
+  const panelH = Math.min(620, GAME_HEIGHT * 0.9);
   const panelX = GAME_WIDTH / 2;
   const panelY = GAME_HEIGHT / 2;
   const panel = scene.add.container(panelX, panelY);
   const panelBg = scene.add.image(0, 0, 'ui_frame');
   panelBg.setDisplaySize(panelW, panelH);
-  const title = scene.add.text(0, -panelH / 2 + 40, 'PAUSED', { font: 'bold 36px Courier', color: '#111' }).setOrigin(0.5);
+  const title = scene.add.text(0, -panelH / 2 + 50, 'PAUSED', { font: 'bold 36px Courier', color: '#111' }).setOrigin(0.5);
   panel.add([panelBg, title]);
 
   // Helper to make a button
   const makeButton = (label, x, y, onClick) => {
-    const w = Math.min(260, panelW - 80);
-    const h = 72;
+    const w = Math.min(280, panelW - 100);
+    const h = 64;
     const btn = scene.add.container(x, y);
     const img = scene.add.image(0, 0, 'ui_btn02_1');
     img.setDisplaySize(w, h);
-    const txt = scene.add.text(0, 0, label, { font: 'bold 26px Courier', color: '#111' }).setOrigin(0.5);
+    const txt = scene.add.text(0, 0, label, { font: 'bold 24px Courier', color: '#111' }).setOrigin(0.5);
     const zone = scene.add.zone(0, 0, w, h).setOrigin(0.5).setInteractive({ useHandCursor: true });
     btn.add([img, txt, zone]);
     btn.setSize(w, h);
@@ -660,29 +666,68 @@ export function showPauseMenu(scene) {
     return btn;
   };
 
+  let leaderboard;
+  let leaderboardEntries;
+  let refreshLeaderboard;
+
   // Main menu container
   const main = scene.add.container(0, 0);
-  const rowY = -panelH / 2 + 120;
-  main.add(makeButton('Resume', 0, rowY, () => hidePauseMenu(scene)));
-  main.add(makeButton('Options', 0, rowY + 80, () => {
-    main.setVisible(false);
-    options.setVisible(true);
-  }));
-  main.add(makeButton('Retry', 0, rowY + 160, () => {
-    overlay.destroy();
-    scene.isPaused = false;
-    scene.physics.world.resume();
-    scene.scene.restart();
-  }));
-  main.add(makeButton('Quit', 0, rowY + 240, () => {
-    try { window.location.href = window.location.href.split('?')[0]; } catch (_) { scene.game.destroy(true); }
-  }));
+  const buttonConfigs = [
+    { label: 'Resume', onClick: () => hidePauseMenu(scene) },
+    {
+      label: 'Options',
+      onClick: () => {
+        main.setVisible(false);
+        options.setVisible(true);
+      }
+    },
+    {
+      label: 'Leaderboard',
+      onClick: () => {
+        main.setVisible(false);
+        leaderboard.setVisible(true);
+        refreshLeaderboard();
+      }
+    },
+    {
+      label: 'Retry',
+      onClick: () => {
+        scene.pauseOverlayCleanup?.();
+        scene.pauseOverlayCleanup = null;
+        scene.pauseUI = null;
+        scene.isPaused = false;
+        scene.physics.world.resume();
+        scene.scene.restart();
+      }
+    },
+    {
+      label: 'Quit',
+      onClick: () => {
+        scene.pauseOverlayCleanup?.();
+        scene.pauseOverlayCleanup = null;
+        scene.pauseUI = null;
+        try {
+          window.location.href = window.location.href.split('?')[0];
+        } catch (_) {
+          scene.game.destroy(true);
+        }
+      }
+    }
+  ];
+  const buttonAreaTop = -panelH / 2 + 140;
+  const buttonAreaBottom = panelH / 2 - 130;
+  const buttonAreaHeight = buttonAreaBottom - buttonAreaTop;
+  const buttonSpacing = buttonConfigs.length > 1 ? buttonAreaHeight / (buttonConfigs.length - 1) : 0;
+  buttonConfigs.forEach((cfg, index) => {
+    const y = Phaser.Math.Clamp(buttonAreaTop + buttonSpacing * index, buttonAreaTop, buttonAreaBottom);
+    main.add(makeButton(cfg.label, 0, y, cfg.onClick));
+  });
   panel.add(main);
 
   // Options container (hidden initially)
   const options = scene.add.container(0, 0);
   options.setVisible(false);
-  const optTitle = scene.add.text(0, -panelH / 2 + 110, 'OPTIONS', { font: 'bold 28px Courier', color: '#111' }).setOrigin(0.5);
+  const optTitle = scene.add.text(0, -panelH / 2 + 120, 'OPTIONS', { font: 'bold 28px Courier', color: '#111' }).setOrigin(0.5);
   options.add(optTitle);
 
   // Pending volumes start from current levels
@@ -733,7 +778,7 @@ export function showPauseMenu(scene) {
   options.add([musicCtl, sfxCtl]);
 
   // Save & Back button
-  const saveBack = makeButton('Save & Back', 0, panelH / 2 - 80, () => {
+  const saveBack = makeButton('Save & Back', 0, panelH / 2 - 90, () => {
     setMusicVolume(pendingMusic);
     setSfxVolume(pendingSfx);
     options.setVisible(false);
@@ -742,6 +787,132 @@ export function showPauseMenu(scene) {
   options.add(saveBack);
   panel.add(options);
 
+  // Leaderboard container (hidden initially)
+  leaderboard = scene.add.container(0, 0);
+  leaderboard.setVisible(false);
+  const leaderboardTitle = scene.add
+    .text(0, -panelH / 2 + 120, 'LEADERBOARD', { font: 'bold 28px Courier', color: '#111' })
+    .setOrigin(0.5);
+  const leaderboardListTop = -panelH / 2 + 170;
+  const leaderboardListHeight = panelH - 280;
+  leaderboardEntries = scene.add
+    .text(-panelW / 2 + 50, leaderboardListTop, 'Loading leaderboard...', {
+      font: '18px Courier',
+      color: '#111',
+      align: 'left'
+    })
+    .setOrigin(0, 0);
+  leaderboardEntries.setWordWrapWidth(panelW - 120);
+  leaderboardEntries.setLineSpacing(4);
+  const leaderboardMaskShape = scene.make.graphics({ x: panelX, y: panelY, add: false });
+  leaderboardMaskShape.fillStyle(0xffffff, 1);
+  leaderboardMaskShape.fillRect(-panelW / 2 + 50, leaderboardListTop, panelW - 100, leaderboardListHeight);
+  const leaderboardMask = leaderboardMaskShape.createGeometryMask();
+  leaderboardEntries.setMask(leaderboardMask);
+  leaderboardMaskShape.destroy();
+  const leaderboardBack = makeButton('Back', 0, panelH / 2 - 90, () => {
+    leaderboard.setVisible(false);
+    main.setVisible(true);
+  });
+  leaderboard.add([leaderboardTitle, leaderboardEntries, leaderboardBack]);
+  panel.add(leaderboard);
+
+  const updateLeaderboardDisplay = entries => {
+    const normalized = Array.isArray(entries) ? entries : [];
+    if (normalized.length === 0) {
+      leaderboardEntries.setText('No runs saved yet.');
+      return;
+    }
+
+    const formatted = normalized
+      .slice(0, 25)
+      .map((entry, index) => `${String(index + 1).padStart(2, '0')}. ${entry.name} - ${formatTimer(entry.time)}`)
+      .join('\n');
+    leaderboardEntries.setText(formatted);
+  };
+
+  const resolveLeaderboardIds = () => {
+    const ids = [];
+    if (resolvedLevelId) ids.push(resolvedLevelId);
+    const mapKey = scene.mapKey;
+    if (mapKey && !ids.includes(mapKey)) ids.push(mapKey);
+    const sceneKey = scene.scene?.key;
+    if (sceneKey && !ids.includes(sceneKey)) ids.push(sceneKey);
+    const cachedId = scene.latestLeaderboardLevelId;
+    if (cachedId && !ids.includes(cachedId)) ids.push(cachedId);
+    if (ids.length === 0) ids.push('default');
+    return ids;
+  };
+
+  const showCachedLeaderboardIfAvailable = idsToTry => {
+    if (
+      scene.latestLeaderboardEntries &&
+      Array.isArray(scene.latestLeaderboardEntries) &&
+      scene.latestLeaderboardEntries.length > 0 &&
+      scene.latestLeaderboardLevelId &&
+      idsToTry.includes(scene.latestLeaderboardLevelId)
+    ) {
+      updateLeaderboardDisplay(scene.latestLeaderboardEntries);
+      return true;
+    }
+    return false;
+  };
+
+  refreshLeaderboard = async () => {
+    const idsToTry = resolveLeaderboardIds();
+    const showedCached = showCachedLeaderboardIfAvailable(idsToTry);
+    if (!showedCached) {
+      leaderboardEntries.setText('Loading leaderboard...');
+    }
+
+    let finalEntries = null;
+    let lastError = null;
+    for (const levelId of idsToTry) {
+      try {
+        const entries = await getLeaderboard(levelId);
+        if (!Array.isArray(entries)) continue;
+        if (!finalEntries || finalEntries.length === 0) {
+          finalEntries = entries;
+        }
+        if (entries.length > 0) {
+          finalEntries = entries;
+          scene.latestLeaderboardEntries = entries;
+          scene.latestLeaderboardLevelId = levelId;
+          break;
+        }
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    if (finalEntries) {
+      updateLeaderboardDisplay(finalEntries);
+      return;
+    }
+
+    if (lastError) {
+      console.error('Failed to load leaderboard.', lastError);
+      leaderboardEntries.setText('Unable to load leaderboard.');
+    } else {
+      leaderboardEntries.setText('No runs saved yet.');
+    }
+  };
+
+  if (scene.pauseOverlayCleanup) {
+    scene.pauseOverlayCleanup();
+    scene.pauseOverlayCleanup = null;
+  }
+  const cleanupOverlay = () => {
+    if (scene.pauseUILeaderboardMask) {
+      scene.pauseUILeaderboardMask.destroy();
+      scene.pauseUILeaderboardMask = null;
+    }
+    if (overlay.scene) {
+      overlay.destroy();
+    }
+  };
+  scene.pauseUILeaderboardMask = leaderboardMask;
+  scene.pauseOverlayCleanup = cleanupOverlay;
   overlay.add(panel);
   scene.ui.add(overlay);
   scene.pauseUI = overlay;
@@ -751,10 +922,13 @@ export function hidePauseMenu(scene) {
   if (!scene.isPaused) return;
   scene.isPaused = false;
   if (scene.pauseButton) scene.pauseButton.setVisible(true);
-  if (scene.pauseUI) {
+  if (scene.pauseOverlayCleanup) {
+    scene.pauseOverlayCleanup();
+    scene.pauseOverlayCleanup = null;
+  } else if (scene.pauseUI) {
     scene.pauseUI.destroy();
-    scene.pauseUI = null;
   }
+  scene.pauseUI = null;
   scene.physics.world.resume();
   if (!scene.isDead) {
     if (scene.playerEnemyCollider) scene.playerEnemyCollider.active = true;
