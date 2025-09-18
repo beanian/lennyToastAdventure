@@ -7,7 +7,7 @@ import { createHUD, showLevelSuccess } from './systems/HUD.js';
 import { setupDebug } from './systems/DebugHelpers.js';
 import { spawnEnemy, spawnCollectible } from './systems/Spawners.js';
 import MobileControls from '../services/MobileControls.js';
-import { resetLevelStats, addSockroachKill, setRawLevelTime } from '../services/LevelStats.js';
+import { resetLevelStats, addSockroachKill, setRawLevelTime, addLifeLost } from '../services/LevelStats.js';
 
 export default class BaseLevelScene extends Phaser.Scene {
   constructor(key, mapKey) {
@@ -391,6 +391,7 @@ export default class BaseLevelScene extends Phaser.Scene {
       if (this.isInvincible) return;
       sfx('hurt');
       this.health -= 1;
+      addLifeLost();
       this.removeHealthIcon();
       this.isInvincible = true;
       playerObj.setTint(0xff0000);
