@@ -25,13 +25,13 @@ const manifest = {
     { key: 'lenny_face', url: new URL('./sprites/lenny/lenny_face.png', import.meta.url).href },
     { key: 'game_over', url: new URL('./sprites/game/game_over.png', import.meta.url).href },
     { key: 'tiles', url: new URL('../levels/level1/nature-paltformer-tileset-16x16.png', import.meta.url).href },
-    { key: 'ui_frame', url: new URL('./UI/Sprites/UI_Flat_Frame02a.png', import.meta.url).href },
-    { key: 'ui_btn02_1', url: new URL('./UI/Sprites/UI_Flat_Button02a_1.png', import.meta.url).href },
-    { key: 'ui_btn02_2', url: new URL('./UI/Sprites/UI_Flat_Button02a_2.png', import.meta.url).href },
-    { key: 'ui_btn02_3', url: new URL('./UI/Sprites/UI_Flat_Button02a_3.png', import.meta.url).href },
-    { key: 'ui_btn02_4', url: new URL('./UI/Sprites/UI_Flat_Button02a_4.png', import.meta.url).href },
-    { key: 'ui_btn_plus', url: new URL('./UI/Sprites/UI_Flat_ButtonPlus01a.png', import.meta.url).href },
-    { key: 'ui_btn_minus', url: new URL('./UI/Sprites/UI_Flat_ButtonMinus01a.png', import.meta.url).href }
+    { key: 'ui_frame', url: new URL('./ui/Sprites/UI_Flat_Frame02a.png', import.meta.url).href },
+    { key: 'ui_btn02_1', url: new URL('./ui/Sprites/UI_Flat_Button02a_1.png', import.meta.url).href },
+    { key: 'ui_btn02_2', url: new URL('./ui/Sprites/UI_Flat_Button02a_2.png', import.meta.url).href },
+    { key: 'ui_btn02_3', url: new URL('./ui/Sprites/UI_Flat_Button02a_3.png', import.meta.url).href },
+    { key: 'ui_btn02_4', url: new URL('./ui/Sprites/UI_Flat_Button02a_4.png', import.meta.url).href },
+    { key: 'ui_btn_plus', url: new URL('./ui/Sprites/UI_Flat_ButtonPlus01a.png', import.meta.url).href },
+    { key: 'ui_btn_minus', url: new URL('./ui/Sprites/UI_Flat_ButtonMinus01a.png', import.meta.url).href }
   ],
   audio: [
     { key: 'jump', url: new URL('./audio/cartoon-jump-6462.mp3', import.meta.url).href },
