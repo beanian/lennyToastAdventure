@@ -804,7 +804,7 @@ export function showPauseMenu(scene) {
     .setOrigin(0, 0);
   leaderboardEntries.setWordWrapWidth(panelW - 120);
   leaderboardEntries.setLineSpacing(4);
-  const leaderboardMaskShape = scene.make.graphics({ x: 0, y: 0, add: false });
+  const leaderboardMaskShape = scene.make.graphics({ x: panelX, y: panelY, add: false });
   leaderboardMaskShape.fillStyle(0xffffff, 1);
   leaderboardMaskShape.fillRect(-panelW / 2 + 50, leaderboardListTop, panelW - 100, leaderboardListHeight);
   const leaderboardMask = leaderboardMaskShape.createGeometryMask();
