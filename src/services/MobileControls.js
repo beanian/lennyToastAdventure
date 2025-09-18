@@ -18,7 +18,7 @@ const removeCoarseListener = handler => {
   }
 };
 
-const shouldEnableControls = () => {
+export const shouldEnableControls = () => {
   const coarse = coarseMedia?.matches;
   if (coarse) return true;
   const width = typeof window !== 'undefined' ? window.innerWidth : 0;

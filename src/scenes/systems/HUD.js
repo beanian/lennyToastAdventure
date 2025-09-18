@@ -1,6 +1,7 @@
 /* global Phaser */
 import { GAME_WIDTH, GAME_HEIGHT } from '../../constants.js';
 import { sfx, getMusicVolume, setMusicVolume, getSfxVolume, setSfxVolume, previewMusicVolume, previewSfxVolume } from '../../AudioBus.js';
+import { shouldEnableControls } from '../../services/MobileControls.js';
 import { getLeaderboard, addRun } from '../../services/LeaderboardService.js';
 import { getLevelStats, addToast, setToastCount } from '../../services/LevelStats.js';
 
@@ -28,16 +29,21 @@ export function createHUD(scene) {
   // Discreet pause button for touch-friendly pause access
   const inputManager = scene.input?.manager;
   const touchManager = inputManager?.touch;
-  let hasTouchSupport = !!(touchManager && touchManager.supported);
+  const globalObj = typeof window !== 'undefined' ? window : null;
+  const hasTouchEvent = !!(
+    globalObj &&
+    ('ontouchstart' in globalObj || globalObj?.navigator?.maxTouchPoints > 0)
+  );
+  const prefersCoarsePointer = !!(
+    globalObj?.matchMedia && globalObj.matchMedia('(pointer: coarse)').matches
+  );
+  const mobileControlsEnabled = typeof shouldEnableControls === 'function' ? shouldEnableControls() : false;
+  const hasTouchSupport =
+    !!touchManager?.supported ||
+    hasTouchEvent ||
+    prefersCoarsePointer ||
+    mobileControlsEnabled;
 
-  if (!hasTouchSupport) {
-    const globalObj = typeof window !== 'undefined' ? window : null;
-    const hasTouchEvent = !!(globalObj && 'ontouchstart' in globalObj);
-    const prefersCoarsePointer = !!(
-      globalObj?.matchMedia && globalObj.matchMedia('(pointer: coarse)').matches
-    );
-    hasTouchSupport = hasTouchEvent || prefersCoarsePointer;
-  }
   if (hasTouchSupport) {
     const btnSize = 72;
     const btn = scene.add.container(GAME_WIDTH - btnSize / 2 - 12, btnSize / 2 + 12);
