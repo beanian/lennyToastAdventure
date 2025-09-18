@@ -31,6 +31,34 @@ export default class InputService {
     return this.cursors.right.isDown || padRight || this.mobile.right;
   }
 
+  hasControlInput() {
+    const keyboardLeft = this.cursors.left?.isDown;
+    const keyboardRight = this.cursors.right?.isDown;
+    const keyboardUp = this.cursors.up?.isDown;
+    const keyboardSpace = this.cursors.space?.isDown;
+
+    const padLeft = this.gamepad?.left?.pressed;
+    const padRight = this.gamepad?.right?.pressed;
+    const padUp = this.gamepad?.up?.pressed;
+    const padA = this.gamepad?.A?.pressed;
+    const padB = this.gamepad?.B?.pressed;
+
+    return (
+      keyboardLeft ||
+      keyboardRight ||
+      keyboardUp ||
+      keyboardSpace ||
+      padLeft ||
+      padRight ||
+      padUp ||
+      padA ||
+      padB ||
+      this.mobile.left ||
+      this.mobile.right ||
+      this.mobile.jump
+    );
+  }
+
   upJustPressed() {
     const keyboardUp = Phaser.Input.Keyboard.JustDown(this.cursors.up);
     const padUp =

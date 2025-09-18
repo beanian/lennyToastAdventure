@@ -4,6 +4,15 @@ import { sfx, getMusicVolume, setMusicVolume, getSfxVolume, setSfxVolume, previe
 import { getLeaderboard, addRun } from '../../services/LeaderboardService.js';
 import { getLevelStats, addToast, setToastCount } from '../../services/LevelStats.js';
 
+const formatTimer = seconds => {
+  const total = Math.max(0, Number(seconds) || 0);
+  const minutes = Math.floor(total / 60);
+  const secs = Math.floor(total % 60);
+  const tenths = Math.floor((total * 10) % 10);
+  const paddedSecs = secs.toString().padStart(2, '0');
+  return `${minutes}:${paddedSecs}.${tenths}`;
+};
+
 export function createHUD(scene) {
   // Core state
   scene.health = 3;
@@ -49,6 +58,17 @@ export function createHUD(scene) {
     .setScrollFactor(0);
   scene.ui.add(scene.toastText);
 
+  scene.levelTimerText = scene.add
+    .text(GAME_WIDTH / 2, 18, formatTimer(0), {
+      font: 'bold 32px Courier',
+      fill: '#ffffff'
+    })
+    .setOrigin(0.5, 0)
+    .setStroke('#000', 4)
+    .setDepth(10)
+    .setScrollFactor(0);
+  scene.ui.add(scene.levelTimerText);
+
   // Render UI elements with dedicated camera
   const cam = scene.cameras.main;
   cam.ignore(scene.ui);
@@ -67,6 +87,10 @@ export function createHUD(scene) {
   scene.hidePauseMenu = () => hidePauseMenu(scene);
   scene.togglePause = () => togglePause(scene);
   scene.showLevelSuccess = (time, levelId) => showLevelSuccess(scene, time, levelId);
+  scene.updateLevelTimerDisplay = seconds => {
+    if (!scene.levelTimerText) return;
+    scene.levelTimerText.setText(formatTimer(seconds));
+  };
 }
 
 export function createHealthIcons(scene) {

@@ -15,9 +15,45 @@ export default class BaseLevelScene extends Phaser.Scene {
     this.mapKey = mapKey;
   }
 
+  resetLevelTimer() {
+    this.levelTimerStart = null;
+    this.levelTimerElapsed = 0;
+    this.levelTimerRunning = false;
+    if (typeof this.updateLevelTimerDisplay === 'function') {
+      this.updateLevelTimerDisplay(0);
+    }
+  }
+
+  startLevelTimer() {
+    if (this.levelTimerRunning || this.isLevelComplete || this.isDead) return;
+    this.levelTimerStart = this.time.now;
+    this.levelTimerElapsed = 0;
+    this.levelTimerRunning = true;
+  }
+
+  stopLevelTimer() {
+    if (this.levelTimerRunning && this.levelTimerStart != null) {
+      this.levelTimerElapsed = (this.time.now - this.levelTimerStart) / 1000;
+    }
+    this.levelTimerRunning = false;
+    if (typeof this.updateLevelTimerDisplay === 'function') {
+      this.updateLevelTimerDisplay(this.levelTimerElapsed);
+    }
+    return this.levelTimerElapsed;
+  }
+
+  getLevelElapsedTime() {
+    if (this.levelTimerRunning && this.levelTimerStart != null) {
+      return (this.time.now - this.levelTimerStart) / 1000;
+    }
+    return this.levelTimerElapsed || 0;
+  }
+
   create() {
     audioInit(this);
-    this.levelStartTime = this.time.now;
+    this.levelTimerStart = null;
+    this.levelTimerElapsed = 0;
+    this.levelTimerRunning = false;
     this.isLevelComplete = false;
     this.levelEndZone = null;
     resetLevelStats();
@@ -228,6 +264,7 @@ export default class BaseLevelScene extends Phaser.Scene {
 
     // --- UI ---
     createHUD(this);
+    this.resetLevelTimer();
 
     // --- Debug setup (gizmos, hitboxes, state text) ---
     setupDebug(this, map, { ground, platforms, entities });
@@ -242,6 +279,20 @@ export default class BaseLevelScene extends Phaser.Scene {
   }
 
   update() {
+    if (!this.levelTimerRunning && !this.isLevelComplete && !this.isDead && this.inputService) {
+      if (this.inputService.hasControlInput()) {
+        this.startLevelTimer();
+      }
+    }
+
+    if (this.isDead && this.levelTimerRunning) {
+      this.stopLevelTimer();
+    }
+
+    if (this.levelTimerRunning && typeof this.updateLevelTimerDisplay === 'function') {
+      this.updateLevelTimerDisplay(this.getLevelElapsedTime());
+    }
+
     if (this.isLevelComplete) return;
     if (
       this.levelEndZone &&
@@ -306,7 +357,7 @@ export default class BaseLevelScene extends Phaser.Scene {
       duration: 600,
       onComplete: () => {
         this.player.setVisible(false);
-        const elapsed = (this.time.now - this.levelStartTime) / 1000;
+        const elapsed = this.stopLevelTimer();
         setRawLevelTime(elapsed);
         showLevelSuccess(this, elapsed, this.mapKey || this.scene.key);
       }
