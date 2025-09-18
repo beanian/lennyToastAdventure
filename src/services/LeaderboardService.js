@@ -1,7 +1,7 @@
 const DEFAULT_ENDPOINT = 'https://jsonblob.com/api/jsonBlob/1417914812679249920';
 const API_ENDPOINT =
   (typeof window !== 'undefined' && window.LEADERBOARD_API_ENDPOINT) || DEFAULT_ENDPOINT;
-const MAX_ENTRIES_PER_LEVEL = 50;
+const MAX_ENTRIES_PER_LEVEL = 500;
 const MAX_NAME_LENGTH = 20;
 const SCHEMA_VERSION = 1;
 
