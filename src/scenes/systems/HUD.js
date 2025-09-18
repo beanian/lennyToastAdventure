@@ -2,6 +2,7 @@
 import { GAME_WIDTH, GAME_HEIGHT } from '../../constants.js';
 import { sfx, getMusicVolume, setMusicVolume, getSfxVolume, setSfxVolume, previewMusicVolume, previewSfxVolume } from '../../AudioBus.js';
 import { getLeaderboard, addRun } from '../../services/LeaderboardService.js';
+import { getLevelStats, addToast, setToastCount } from '../../services/LevelStats.js';
 
 export function createHUD(scene) {
   // Core state
@@ -9,6 +10,8 @@ export function createHUD(scene) {
   scene.isDead = false;
   scene.isInvincible = false;
   scene.toastCount = 0;
+  scene.sockroachKills = scene.sockroachKills || 0;
+  setToastCount(scene.toastCount);
 
   // UI container pinned to screen
   scene.ui = scene.add.container(0, 0).setScrollFactor(0).setDepth(10);
@@ -116,8 +119,9 @@ export function collectToast(scene, toast) {
     onComplete: () => toast.destroy()
   });
   sfx('toastCollect');
-  scene.toastCount += toast.value;
-  scene.toastText.setText(`${scene.toastCount}`);
+  const totalToasts = addToast(toast.value);
+  scene.toastCount = totalToasts;
+  scene.toastText.setText(`${totalToasts}`);
   scene.tweens.add({
     targets: scene.toastText,
     scale: { from: 1.3, to: 1 },
@@ -240,37 +244,101 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
     .setOrigin(0, 0);
   overlay.add(dim);
 
-  const panelW = Math.min(720, GAME_WIDTH * 0.9);
-  const panelH = Math.min(540, GAME_HEIGHT * 0.9);
+  const safeMargin = Math.max(32, GAME_HEIGHT * 0.08);
+  const panelMaxHeight = GAME_HEIGHT - safeMargin * 2;
+  const panelW = Math.min(760, GAME_WIDTH * 0.9);
+  const desiredPanelH = 620;
+  let panelH = Math.min(desiredPanelH, panelMaxHeight);
+  if (panelMaxHeight >= 420) {
+    panelH = Math.max(panelH, 420);
+  }
+  if (panelH <= 0) {
+    panelH = Math.min(desiredPanelH, GAME_HEIGHT - safeMargin);
+  }
   const panel = scene.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2 + panelH);
   const panelBg = scene.add.image(0, 0, 'ui_frame');
   panelBg.setDisplaySize(panelW, panelH);
   const title = scene.add
     .text(0, -panelH / 2 + 40, 'LEVEL COMPLETE', { font: 'bold 36px Courier', color: '#111' })
     .setOrigin(0.5);
-  const toastTxt = scene.add
-    .text(0, -40, `Toasts: ${scene.toastCount}`, { font: 'bold 26px Courier', color: '#111' })
-    .setOrigin(0.5);
-  const timeTxt = scene.add
-    .text(0, 20, `Time: ${timeTaken.toFixed(2)}s`, { font: 'bold 26px Courier', color: '#111' })
-    .setOrigin(0.5);
+  const stats = getLevelStats();
+  const toastCount = stats.toastCount || 0;
+  const sockroachKills = stats.sockroachKills || 0;
+  const rawTime = stats.rawLevelTime > 0 ? stats.rawLevelTime : timeTaken;
+  const toastSavings = toastCount * 0.1;
+  const sockroachSavings = sockroachKills * 0.25;
+  const finalTime = Math.max(0, rawTime - toastSavings - sockroachSavings);
+  const formatSeconds = value => `${value.toFixed(2)}s`;
 
-  const leaderboardTitle = scene.add
-    .text(0, 70, 'FASTEST RUNS', { font: 'bold 24px Courier', color: '#111' })
-    .setOrigin(0.5, 0);
-  const leaderboardText = scene.add
-    .text(0, 110, '', {
-      font: '22px Courier',
-      color: '#111',
-      align: 'center'
-    })
-    .setOrigin(0.5, 0);
+  const buttonHeight = 72;
+  const bottomMargin = Math.max(28, panelH * 0.08);
+  const btnY = panelH / 2 - bottomMargin - buttonHeight / 2;
+  const formOffset = buttonHeight + 26;
+  const formY = btnY - formOffset;
+  const formEstimatedHeight = 56;
+  const saveStatusY = formY - formEstimatedHeight / 2 - 24;
+  const titleGap = 36;
+  const contentTop = -panelH / 2 + 40 + titleGap;
+  const contentBottom = saveStatusY - 24;
+  const contentHeight = Math.max(40, contentBottom - contentTop);
+  const contentWidth = panelW - 80;
+
+  const resultsHtml = `
+    <div class="success-content" style="
+      width:${Math.floor(contentWidth)}px;
+      max-height:${Math.floor(contentHeight)}px;
+      overflow-y:auto;
+      padding-right:8px;
+      box-sizing:border-box;
+      font-family: Courier, monospace;
+      color:#111;
+    ">
+      <section style="margin-bottom:18px;">
+        <h3 style="margin:0 0 12px; font-size:24px; font-weight:bold; text-align:left;">Results</h3>
+        <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:8px; font-size:22px; font-weight:bold;">
+          <span style="flex:1; min-width:0;">Toasts collected</span>
+          <span style="text-align:right; white-space:nowrap;">${toastCount}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:12px; font-size:22px; font-weight:bold;">
+          <span style="flex:1; min-width:0;">Sockroaches defeated</span>
+          <span style="text-align:right; white-space:nowrap;">${sockroachKills}</span>
+        </div>
+      </section>
+      <section style="margin-bottom:18px;">
+        <h3 style="margin:0 0 12px; font-size:24px; font-weight:bold; text-align:left;">Time Savings</h3>
+        <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:8px; font-size:20px;">
+          <span style="flex:1; min-width:0;">Time saved (toasts)</span>
+          <span style="text-align:right; white-space:nowrap;">${toastCount} × 0.10s = ${toastSavings.toFixed(2)}s</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; font-size:20px;">
+          <span style="flex:1; min-width:0;">Time saved (Sockroaches)</span>
+          <span style="text-align:right; white-space:nowrap;">${sockroachKills} × 0.25s = ${sockroachSavings.toFixed(2)}s</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:6px; font-size:20px;">
+          <span style="flex:1; min-width:0;">Raw time</span>
+          <span style="text-align:right; white-space:nowrap;">${formatSeconds(rawTime)}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:12px; font-size:22px; font-weight:bold; color:#0a6622;">
+          <span style="flex:1; min-width:0;">Final time</span>
+          <span style="text-align:right; white-space:nowrap;">${formatSeconds(finalTime)}</span>
+        </div>
+      </section>
+      <section>
+        <h3 style="margin:0 0 12px; font-size:24px; font-weight:bold; text-align:left;">Fastest Runs</h3>
+        <div class="leaderboard-entries" style="font-size:20px; line-height:1.35; white-space:pre-wrap; word-break:break-word;">Loading leaderboard...</div>
+      </section>
+    </div>
+  `;
+
+  const resultsDom = scene.add.dom(0, contentTop).createFromHTML(resultsHtml);
+  resultsDom.setOrigin(0.5, 0);
+  const leaderboardEntriesEl = resultsDom?.node?.querySelector('.leaderboard-entries');
 
   const saveStatus = scene.add
-    .text(0, panelH / 2 - 140, '', { font: '20px Courier', color: '#117722' })
+    .text(0, saveStatusY, '', { font: '20px Courier', color: '#117722' })
     .setOrigin(0.5);
 
-  panel.add([panelBg, title, toastTxt, timeTxt, leaderboardTitle, leaderboardText, saveStatus]);
+  panel.add([panelBg, title, resultsDom, saveStatus]);
 
   // Compute a responsive button width that fits three side-by-side
   const btnW = Math.min(260, Math.floor((panelW - 80) / 3));
@@ -313,22 +381,21 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
     return btn;
   };
 
-  const btnY = panelH / 2 - 60;
   let hasSavedRun = false;
   let saveInFlight = false;
 
   const formDom = scene.add
-    .dom(0, btnY - 110)
+    .dom(0, formY)
     .createFromHTML(`
-      <form style="display:flex; gap:8px; align-items:center; font-family: Courier, monospace;">
+      <form style="display:flex; gap:8px; align-items:center; font-family: Courier, monospace; width:${Math.floor(contentWidth)}px; max-width:${Math.floor(contentWidth)}px;">
         <input
           type="text"
           name="playerName"
           maxlength="20"
           placeholder="Enter your name"
-          style="flex:1; padding:8px 10px; font-size:18px; border:2px solid #111; border-radius:6px;"
+          style="flex:1; min-width:0; padding:8px 10px; font-size:18px; border:2px solid #111; border-radius:6px;"
         />
-        <button type="submit" style="padding:8px 16px; font-size:18px; border:2px solid #111; border-radius:6px; background:#ffcc00; cursor:pointer;">
+        <button type="submit" style="padding:8px 16px; font-size:18px; border:2px solid #111; border-radius:6px; background:#ffcc00; cursor:pointer; white-space:nowrap;">
           Save
         </button>
       </form>
@@ -371,25 +438,30 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
   panel.add([nextBtn, saveBtn, quitBtn]);
 
   const updateLeaderboardDisplay = entries => {
+    if (!leaderboardEntriesEl) return;
     if (!entries || entries.length === 0) {
-      leaderboardText.setText('No runs saved yet.');
+      leaderboardEntriesEl.textContent = 'No runs saved yet.';
       return;
     }
     const formatted = entries
       .slice(0, 5)
       .map((entry, index) => `${index + 1}. ${entry.name} - ${entry.time.toFixed(2)}s`)
       .join('\n');
-    leaderboardText.setText(formatted);
+    leaderboardEntriesEl.textContent = formatted;
   };
 
   const refreshLeaderboard = async () => {
-    leaderboardText.setText('Loading leaderboard...');
+    if (leaderboardEntriesEl) {
+      leaderboardEntriesEl.textContent = 'Loading leaderboard...';
+    }
     try {
       const entries = await getLeaderboard(resolvedLevelId);
       updateLeaderboardDisplay(entries);
     } catch (err) {
       console.error('Failed to load leaderboard.', err);
-      leaderboardText.setText('Unable to load leaderboard.');
+      if (leaderboardEntriesEl) {
+        leaderboardEntriesEl.textContent = 'Unable to load leaderboard.';
+      }
     }
   };
 
@@ -417,7 +489,7 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
 
     (async () => {
       try {
-        const { entries, entry, rank } = await addRun(resolvedLevelId, sanitizedName, timeTaken);
+        const { entries, entry, rank } = await addRun(resolvedLevelId, sanitizedName, finalTime);
         updateLeaderboardDisplay(entries);
         storeLastName(entry?.name || sanitizedName);
         hasSavedRun = true;
