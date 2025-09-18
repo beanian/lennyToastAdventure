@@ -26,8 +26,18 @@ export function createHUD(scene) {
   scene.ui = scene.add.container(0, 0).setScrollFactor(0).setDepth(10);
 
   // Discreet pause button for touch-friendly pause access
-  const touchManager = scene.input?.manager?.touch;
-  const hasTouchSupport = !!(touchManager && touchManager.supported);
+  const inputManager = scene.input?.manager;
+  const touchManager = inputManager?.touch;
+  let hasTouchSupport = !!(touchManager && touchManager.supported);
+
+  if (!hasTouchSupport) {
+    const globalObj = typeof window !== 'undefined' ? window : null;
+    const hasTouchEvent = !!(globalObj && 'ontouchstart' in globalObj);
+    const prefersCoarsePointer = !!(
+      globalObj?.matchMedia && globalObj.matchMedia('(pointer: coarse)').matches
+    );
+    hasTouchSupport = hasTouchEvent || prefersCoarsePointer;
+  }
   if (hasTouchSupport) {
     const btnSize = 72;
     const btn = scene.add.container(GAME_WIDTH - btnSize / 2 - 12, btnSize / 2 + 12);
