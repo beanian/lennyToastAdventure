@@ -5,6 +5,23 @@ import { shouldEnableControls } from '../../services/MobileControls.js';
 import { getLeaderboard, addRun } from '../../services/LeaderboardService.js';
 import { getLevelStats, addToast, setToastCount } from '../../services/LevelStats.js';
 
+const SPEED_CHEAT_KEY = 'lenny-toast-speedboost';
+
+const isSpeedCheatEnabled = () => {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage?.getItem(SPEED_CHEAT_KEY) === '1';
+  } catch (err) {
+    console.warn('Unable to read speed cheat flag.', err);
+    return false;
+  }
+};
+
+const updatePauseButtonIcon = scene => {
+  if (!scene?.pauseButtonIcon) return;
+  scene.pauseButtonIcon.setText(isSpeedCheatEnabled() ? 'P' : 'II');
+};
+
 const formatTimer = seconds => {
   const total = Math.max(0, Number(seconds) || 0);
   const minutes = Math.floor(total / 60);
@@ -94,6 +111,8 @@ export function createHUD(scene) {
     btn.add([bg, icon, zone]);
     scene.ui.add(btn);
     scene.pauseButton = btn;
+    scene.pauseButtonIcon = icon;
+    updatePauseButtonIcon(scene);
   }
 
   // Health icons
@@ -315,7 +334,6 @@ export function showGameOver(scene) {
 
 export function showLevelSuccess(scene, timeTaken, levelId) {
   const resolvedLevelId = levelId || scene.mapKey || scene.scene.key || 'default';
-  const SPEED_CHEAT_KEY = 'lenny-toast-speedboost';
   const loadLastName = () => {
     if (typeof window === 'undefined') return '';
     try {
@@ -337,6 +355,7 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
     if (typeof window === 'undefined') return;
     try {
       window.localStorage?.setItem(SPEED_CHEAT_KEY, '1');
+      updatePauseButtonIcon(scene);
     } catch (err) {
       console.warn('Unable to store speed cheat flag.', err);
     }
