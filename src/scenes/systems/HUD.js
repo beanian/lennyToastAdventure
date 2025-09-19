@@ -361,6 +361,16 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
     }
   };
 
+  const disableSpeedCheat = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage?.removeItem(SPEED_CHEAT_KEY);
+      updatePauseButtonIcon(scene);
+    } catch (err) {
+      console.warn('Unable to clear speed cheat flag.', err);
+    }
+  };
+
   const overlay = scene.add.container(0, 0).setScrollFactor(0).setDepth(10000);
   const dim = scene.add
     .rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6)
@@ -633,6 +643,8 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
         storeLastName(savedName);
         if (savedName === 'Evanbb') {
           enableSpeedCheat();
+        } else {
+          disableSpeedCheat();
         }
         hasSavedRun = true;
         formDom.setVisible(false);
