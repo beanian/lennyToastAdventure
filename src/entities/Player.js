@@ -1,5 +1,17 @@
 import { sfx } from '../AudioBus.js';
 
+const SPEED_CHEAT_KEY = 'lenny-toast-speedboost';
+
+function getSpeedMultiplier() {
+  if (typeof window === 'undefined') return 1;
+  try {
+    return window.localStorage?.getItem(SPEED_CHEAT_KEY) === '1' ? 1.15 : 1;
+  } catch (err) {
+    console.warn('Unable to read speed cheat flag.', err);
+    return 1;
+  }
+}
+
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   static createAnimations(scene) {
     scene.anims.create({
@@ -43,6 +55,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Store input service under a non-reserved property to avoid clashing
     // with Phaser's own `input` component on game objects
     this.inputService = inputService;
+    this.moveSpeed = 160 * getSpeedMultiplier();
     this.jumpCount = 0;
   }
 
@@ -51,11 +64,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (onGround) this.jumpCount = 0;
 
     if (this.inputService.left()) {
-      this.setVelocityX(-160);
+      this.setVelocityX(-this.moveSpeed);
       this.setFlipX(true);
       if (onGround) this.play('walk', true);
     } else if (this.inputService.right()) {
-      this.setVelocityX(160);
+      this.setVelocityX(this.moveSpeed);
       this.setFlipX(false);
       if (onGround) this.play('walk', true);
     } else {

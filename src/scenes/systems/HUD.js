@@ -315,6 +315,7 @@ export function showGameOver(scene) {
 
 export function showLevelSuccess(scene, timeTaken, levelId) {
   const resolvedLevelId = levelId || scene.mapKey || scene.scene.key || 'default';
+  const SPEED_CHEAT_KEY = 'lenny-toast-speedboost';
   const loadLastName = () => {
     if (typeof window === 'undefined') return '';
     try {
@@ -330,6 +331,14 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
       window.localStorage?.setItem('lenny-toast-lastname', name);
     } catch (err) {
       console.warn('Unable to store leaderboard name.', err);
+    }
+  };
+  const enableSpeedCheat = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage?.setItem(SPEED_CHEAT_KEY, '1');
+    } catch (err) {
+      console.warn('Unable to store speed cheat flag.', err);
     }
   };
 
@@ -601,7 +610,11 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
       try {
         const { entries, entry, rank } = await addRun(resolvedLevelId, sanitizedName, finalTime);
         updateLeaderboardDisplay(entries);
-        storeLastName(entry?.name || sanitizedName);
+        const savedName = entry?.name || sanitizedName;
+        storeLastName(savedName);
+        if (savedName === 'Evanbb') {
+          enableSpeedCheat();
+        }
         hasSavedRun = true;
         formDom.setVisible(false);
         if (typeof formDom.node.reset === 'function') formDom.node.reset();
