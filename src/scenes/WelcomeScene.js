@@ -25,14 +25,14 @@ export default class WelcomeScene extends Phaser.Scene {
     const welcomeScale = Math.min(innerWidth / welcomeImage.width, innerHeight / welcomeImage.height);
     welcomeImage.setScale(welcomeScale);
 
-    const prompt = this.add.text(width / 2, height * 0.82, 'Press SPACE or Click to Start', {
-      fontFamily: 'monospace',
-      fontSize: '48px',
-      color: '#ffffff',
-      stroke: '#000000',
-      strokeThickness: 6
-    });
-    prompt.setOrigin(0.5);
+    // const prompt = this.add.text(width / 2, height * 0.82, 'Press SPACE or Click to Start', {
+    //   fontFamily: 'monospace',
+    //   fontSize: '48px',
+    //   color: '#ffffff',
+    //   stroke: '#000000',
+    //   strokeThickness: 6
+    // });
+    // prompt.setOrigin(0.5);
 
     this.createChangeLogUI(width, height, frame);
 

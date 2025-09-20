@@ -14,30 +14,6 @@ export const CHANGE_LOG_ENTRIES = [
       'Beta version with only speedrun mode enabled',
       'More levels and features coming soon!'
     ]
-  },
-  {
-    date: '2025-09-18',
-    title: 'Lennys Toast Quest Launched!!!!',
-    highlights: [
-      'Beta version with only speedrun mode enabled',
-      'More levels and features coming soon!'
-    ]
-  },
-  {
-    date: '2025-09-18',
-    title: 'Lennys Toast Quest Launched!!!!',
-    highlights: [
-      'Beta version with only speedrun mode enabled',
-      'More levels and features coming soon!'
-    ]
-  },
-  {
-    date: '2025-09-18',
-    title: 'Lennys Toast Quest Launched!!!!',
-    highlights: [
-      'Beta version with only speedrun mode enabled',
-      'More levels and features coming soon!'
-    ]
   }
 ];
 
