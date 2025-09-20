@@ -16,6 +16,44 @@ function sanitizeName(name) {
   return trimmed.slice(0, MAX_NAME_LENGTH);
 }
 
+function normalizeEntry(entry) {
+  if (!entry || typeof entry !== 'object') return null;
+  const name = sanitizeName(entry.name || 'Player');
+  const time = Number(entry.time);
+  if (!Number.isFinite(time)) return null;
+  const timestampRaw = Number(entry.timestamp);
+  const timestamp = Number.isFinite(timestampRaw) ? timestampRaw : Date.now();
+  return { name, time, timestamp };
+}
+
+function sortEntries(entries) {
+  return [...entries].sort((a, b) => {
+    if (a.time === b.time) return (a.timestamp || 0) - (b.timestamp || 0);
+    return a.time - b.time;
+  });
+}
+
+function dedupeEntries(entries, { limit = MAX_ENTRIES_PER_LEVEL } = {}) {
+  const byName = new Map();
+  for (const entry of entries || []) {
+    const normalized = normalizeEntry(entry);
+    if (!normalized) continue;
+    const existing = byName.get(normalized.name);
+    if (
+      !existing ||
+      normalized.time < existing.time ||
+      (normalized.time === existing.time && normalized.timestamp < existing.timestamp)
+    ) {
+      byName.set(normalized.name, normalized);
+    }
+  }
+  const sorted = sortEntries([...byName.values()]);
+  if (typeof limit === 'number' && limit >= 0) {
+    return sorted.slice(0, limit);
+  }
+  return sorted;
+}
+
 function normalizeStore(raw) {
   if (!raw || typeof raw !== 'object') {
     return { schemaVersion: SCHEMA_VERSION, levels: {} };
@@ -36,18 +74,7 @@ function normalizeStore(raw) {
   const normalized = { schemaVersion: SCHEMA_VERSION, levels: {} };
   for (const [levelId, records] of Object.entries(levels)) {
     if (!Array.isArray(records)) continue;
-    normalized.levels[levelId] = records
-      .filter(entry => entry && typeof entry === 'object' && typeof entry.time === 'number')
-      .map(entry => ({
-        name: sanitizeName(entry.name || 'Player'),
-        time: Number(entry.time),
-        timestamp: typeof entry.timestamp === 'number' ? entry.timestamp : Date.now()
-      }))
-      .sort((a, b) => {
-        if (a.time === b.time) return (a.timestamp || 0) - (b.timestamp || 0);
-        return a.time - b.time;
-      })
-      .slice(0, MAX_ENTRIES_PER_LEVEL);
+    normalized.levels[levelId] = dedupeEntries(records);
   }
 
   return normalized;
@@ -116,10 +143,7 @@ export async function getLeaderboard(levelId) {
   if (!levelId) return [];
   const store = await fetchStore();
   const entries = Array.isArray(store.levels?.[levelId]) ? store.levels[levelId] : [];
-  return [...entries].sort((a, b) => {
-    if (a.time === b.time) return (a.timestamp || 0) - (b.timestamp || 0);
-    return a.time - b.time;
-  });
+  return dedupeEntries(entries);
 }
 
 export async function addRun(levelId, name, timeSeconds) {
@@ -139,19 +163,18 @@ export async function addRun(levelId, name, timeSeconds) {
     const levels = store.levels || (store.levels = {});
     const current = Array.isArray(levels[levelId]) ? [...levels[levelId]] : [];
     current.push(entry);
-    current.sort((a, b) => {
-      if (a.time === b.time) return (a.timestamp || 0) - (b.timestamp || 0);
-      return a.time - b.time;
-    });
-    const rank = current.indexOf(entry) + 1;
-    if (current.length > MAX_ENTRIES_PER_LEVEL) {
-      current.length = MAX_ENTRIES_PER_LEVEL;
-    }
-    levels[levelId] = current;
+    const dedupedAll = dedupeEntries(current, { limit: -1 });
+    const bestEntry = dedupedAll.find(e => e.name === entry.name) || null;
+    const rank = bestEntry ? dedupedAll.indexOf(bestEntry) + 1 : -1;
+    const limited =
+      typeof MAX_ENTRIES_PER_LEVEL === 'number' && MAX_ENTRIES_PER_LEVEL >= 0
+        ? dedupedAll.slice(0, MAX_ENTRIES_PER_LEVEL)
+        : dedupedAll;
+    levels[levelId] = limited;
     store.updatedAt = Date.now();
     await persistStore(store);
     cache = store;
-    return { entries: [...current], entry, rank };
+    return { entries: [...limited], entry: bestEntry, rank };
   }).catch(err => {
     console.error('Failed to save leaderboard run.', err);
     throw err;
