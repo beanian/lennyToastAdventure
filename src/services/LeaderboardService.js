@@ -1,4 +1,4 @@
-const DEFAULT_ENDPOINT = 'https://jsonblob.com/api/jsonBlob/1417914812679249920';
+const DEFAULT_ENDPOINT = 'https://jsonblob.com/api/jsonBlob/2417914812679249920';
 const API_ENDPOINT =
   (typeof window !== 'undefined' && window.LEADERBOARD_API_ENDPOINT) || DEFAULT_ENDPOINT;
 const MAX_ENTRIES_PER_LEVEL = 500;
