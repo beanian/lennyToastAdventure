@@ -1,10 +1,42 @@
 export const CHANGE_LOG_ENTRIES = [
   {
-    date: '2024-05-30',
-    title: 'Welcome Screen Updates',
+    date: '2025-09-20',
+    title: 'Leaderboard Reworked',
     highlights: [
-      'Added a dedicated change log viewer to the welcome screen.',
-      'Introduced a reusable change log data file for tracking updates.'
+      'Leaderboard now displays each unique players fastest run only',
+      'Added this changelog screen :)'
+    ]
+  },
+    {
+    date: '2025-09-18',
+    title: 'Lennys Toast Quest Launched!!!!',
+    highlights: [
+      'Beta version with only speedrun mode enabled',
+      'More levels and features coming soon!'
+    ]
+  },
+  {
+    date: '2025-09-18',
+    title: 'Lennys Toast Quest Launched!!!!',
+    highlights: [
+      'Beta version with only speedrun mode enabled',
+      'More levels and features coming soon!'
+    ]
+  },
+  {
+    date: '2025-09-18',
+    title: 'Lennys Toast Quest Launched!!!!',
+    highlights: [
+      'Beta version with only speedrun mode enabled',
+      'More levels and features coming soon!'
+    ]
+  },
+  {
+    date: '2025-09-18',
+    title: 'Lennys Toast Quest Launched!!!!',
+    highlights: [
+      'Beta version with only speedrun mode enabled',
+      'More levels and features coming soon!'
     ]
   }
 ];
