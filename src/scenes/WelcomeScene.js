@@ -91,55 +91,17 @@ export default class WelcomeScene extends Phaser.Scene {
 
     const updates = getRecentChangeLogEntries();
     const changeLogText = updates.length ? formatChangeLogEntries(updates) : 'No updates yet. Check back soon!';
-    const contentTop = -panelHeight / 2 + 96;
-    const contentLeft = -panelWidth / 2 + 32;
-    const contentWidth = panelWidth - 64;
-    const contentHeight = panelHeight - 160;
-
-    const updatesText = this.add.text(contentLeft, contentTop, changeLogText, {
+    const updatesText = this.add.text(-panelWidth / 2 + 32, -panelHeight / 2 + 96, changeLogText, {
       fontFamily: 'monospace',
       fontSize: '28px',
       color: '#ffffff',
-      wordWrap: { width: contentWidth },
+      wordWrap: { width: panelWidth - 64 },
       lineSpacing: 8
     });
     updatesText.setOrigin(0, 0);
     updatesText.setInteractive();
     updatesText.setData('uiElement', true);
     panelContainer.add(updatesText);
-
-    const maskRect = this.add.rectangle(contentLeft + contentWidth / 2, contentTop + contentHeight / 2, contentWidth, contentHeight, 0xffffff, 0.001);
-    maskRect.setVisible(false);
-    panelContainer.add(maskRect);
-    const changeLogMask = maskRect.createGeometryMask();
-    updatesText.setMask(changeLogMask);
-
-    this.changeLogText = updatesText;
-    this.changeLogBaseY = updatesText.y;
-    this.changeLogViewHeight = contentHeight;
-    this.changeLogScrollOffset = 0;
-
-    const handleScroll = (deltaY) => {
-      if (!this.changeLogText) {
-        return;
-      }
-      const maxScroll = Math.max(0, this.changeLogText.height - this.changeLogViewHeight);
-      if (maxScroll <= 0) {
-        this.changeLogScrollOffset = 0;
-        this.changeLogText.y = this.changeLogBaseY;
-        return;
-      }
-      const step = Math.sign(deltaY) * 40;
-      this.changeLogScrollOffset = Phaser.Math.Clamp(
-        this.changeLogScrollOffset + step,
-        0,
-        maxScroll
-      );
-      this.changeLogText.y = this.changeLogBaseY - this.changeLogScrollOffset;
-    };
-
-    panelBackground.on('wheel', (pointer, currentlyOver, deltaX, deltaY) => handleScroll(deltaY));
-    updatesText.on('wheel', (pointer, currentlyOver, deltaX, deltaY) => handleScroll(deltaY));
 
     const closeButton = this.add.text(panelWidth / 2 - 24, -panelHeight / 2 + 16, '✕', {
       fontFamily: 'monospace',
@@ -151,7 +113,6 @@ export default class WelcomeScene extends Phaser.Scene {
     closeButton.setData('uiElement', true);
     closeButton.on('pointerup', () => {
       panelContainer.setVisible(false);
-      this.resetChangeLogScroll();
     });
     panelContainer.add(closeButton);
 
@@ -161,21 +122,10 @@ export default class WelcomeScene extends Phaser.Scene {
     button.on('pointerup', () => {
       const isVisible = panelContainer.visible;
       panelContainer.setVisible(!isVisible);
-      if (!isVisible) {
-        this.resetChangeLogScroll();
-      }
     });
 
     this.changeLogButton = button;
     this.changeLogPanel = panelContainer;
-  }
-
-  resetChangeLogScroll() {
-    if (!this.changeLogText) {
-      return;
-    }
-    this.changeLogScrollOffset = 0;
-    this.changeLogText.y = this.changeLogBaseY;
   }
 
   startGame() {

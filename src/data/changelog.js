@@ -4,7 +4,10 @@ export const CHANGE_LOG_ENTRIES = [
     title: 'Leaderboard Reworked',
     highlights: [
       'Leaderboard now displays each unique players fastest run only',
+      'Renamed from Lennys Toast Adventure to Lennys Toast Quest',
+      'Added new domain lenny.toast.quest',
       'Added this changelog screen :)'
+
     ]
   },
     {
