@@ -4,7 +4,7 @@ import PreloadScene from './scenes/PreloadScene.js';
 import WelcomeScene from './scenes/WelcomeScene.js';
 import Level1Scene from './scenes/Level1Scene.js';
 
-document.title = `Lenny Toast Adventure ${VERSION}`;
+document.title = `Lenny Toast Quest ${VERSION}`;
 
 const config = {
   type: Phaser.AUTO,
