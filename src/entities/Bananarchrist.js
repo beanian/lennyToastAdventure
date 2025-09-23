@@ -35,7 +35,7 @@ export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
     this.body.setSize(bodyWidth, bodyHeight);
     this.body.setOffset(
       (this.displayWidth - bodyWidth) / 2,
-      (this.displayHeight - bodyHeight) -18
+      (this.displayHeight - bodyHeight)+220
     );
 
     this.setCollideWorldBounds(true);

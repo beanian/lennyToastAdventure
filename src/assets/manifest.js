@@ -44,6 +44,7 @@ const manifest = {
   audio: [
     { key: 'jump', url: new URL('./audio/cartoon-jump-6462.mp3', import.meta.url).href },
     { key: 'bgm', url: new URL('./audio/Pixel Jump Groove.mp3', import.meta.url).href },
+    { key: 'testBgm', url: new URL('./audio/Pixelated Anarchy.mp3', import.meta.url).href },
     { key: 'toastCollect', url: new URL('./audio/toast-collect.mp3', import.meta.url).href },
     { key: 'hurt', url: new URL('./audio/Hurt.wav', import.meta.url).href },
     { key: 'landEnemy', url: new URL('./audio/LandOnEnemy.wav', import.meta.url).href },
