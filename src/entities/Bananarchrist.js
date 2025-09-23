@@ -58,6 +58,9 @@ export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
   }
 
   hasGroundAt(x, y) {
+    if (!this.map || !Array.isArray(this.groundLayers) || this.groundLayers.length === 0) {
+      return true;
+    }
     for (const layer of this.groundLayers) {
       const t = this.map.getTileAtWorldXY(x, y, false, this.scene.cameras.main, layer);
       if (t && (t.collides || t.index > -1)) return true;

@@ -53,8 +53,7 @@ const manifest = {
     { key: 'ui_select', url: new URL('./audio/select_002.ogg', import.meta.url).href }
   ],
   tilemaps: [
-    { key: 'level1', url: new URL('../levels/level1/level1.tmj', import.meta.url).href },
-    { key: 'bananarchristTest', url: levelUrl('bananarchrist-test/bananarchrist-test.tmj') }
+    { key: 'level1', url: new URL('../levels/level1/level1.tmj', import.meta.url).href }
   ]
 };
 
