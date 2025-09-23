@@ -1,17 +1,28 @@
 import Sockroach from '../../entities/Sockroach.js';
+import Bananarchrist from '../../entities/Bananarchrist.js';
 import { collectToast } from './HUD.js';
 
+const ENEMY_TYPES = {
+  sockroach: Sockroach,
+  bananarchrist: Bananarchrist
+};
+
 export function spawnEnemy(scene, kind, x, y, props, map, groundLayers = []) {
-  // Ensure animations exist
-  Sockroach.createAnimations(scene);
+  const key = kind?.toLowerCase?.() || 'sockroach';
+  const EnemyClass = ENEMY_TYPES[key] || Sockroach;
+  EnemyClass.createAnimations(scene);
   const toNum = (v, d) => {
     const n = Number(v);
     return Number.isFinite(n) && n > 0 ? n : d;
   };
   const speed = toNum(props.speed, 50);
   const range = toNum(props.patrolWidth ?? props.range, 160);
-  const enemy = new Sockroach(scene, x, y, scene.player.displayHeight, { speed, range, map, groundLayers });
-  enemy.play('sockroach_walk');
+  const enemy = new EnemyClass(scene, x, y, scene.player.displayHeight, { speed, range, map, groundLayers });
+  if (!enemy.enemyKind) enemy.enemyKind = key;
+  const walkKey = enemy.animKeys?.walk;
+  if (walkKey && enemy.anims?.currentAnim?.key !== walkKey) {
+    enemy.play(walkKey, true);
+  }
   // Optional pathName: build patrol along polyline in 'Paths' layer
   const pathName = (props.pathName || '').trim();
   if (pathName) {

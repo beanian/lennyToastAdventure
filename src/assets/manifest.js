@@ -34,6 +34,13 @@ const manifest = {
     { key: 'ui_btn_plus', url: new URL('./ui/Sprites/UI_Flat_ButtonPlus01a.png', import.meta.url).href },
     { key: 'ui_btn_minus', url: new URL('./ui/Sprites/UI_Flat_ButtonMinus01a.png', import.meta.url).href }
   ],
+  aseprites: [
+    {
+      key: 'bananarchrist',
+      textureURL: new URL('./sprites/bananarchist/Bananarchist 2.png', import.meta.url).href,
+      atlasURL: new URL('./sprites/bananarchist/Bananarchist 2.json', import.meta.url).href
+    }
+  ],
   audio: [
     { key: 'jump', url: new URL('./audio/cartoon-jump-6462.mp3', import.meta.url).href },
     { key: 'bgm', url: new URL('./audio/Pixel Jump Groove.mp3', import.meta.url).href },

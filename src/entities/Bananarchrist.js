@@ -1,41 +1,19 @@
 const ANIM_KEYS = {
-  walk: 'sockroach_walk',
-  stomp: 'sockroach_stomp'
+  walk: 'bananarchrist_Walk',
+  idle: 'bananarchrist_Idle',
+  stomp: 'bananarchrist_Stomp'
 };
 
-export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
+export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
   static createAnimations(scene) {
     const anims = scene.anims;
     if (!anims.exists(ANIM_KEYS.walk)) {
-      anims.create({
-        key: ANIM_KEYS.walk,
-        frames: [
-          { key: 'sockroach_walk_1' },
-          { key: 'sockroach_walk_2' },
-          { key: 'sockroach_walk_3' },
-          { key: 'sockroach_walk_4' },
-          { key: 'sockroach_walk_5' },
-        ],
-        frameRate: 8,
-        repeat: -1
-      });
-    }
-
-    if (!anims.exists(ANIM_KEYS.stomp)) {
-      anims.create({
-        key: ANIM_KEYS.stomp,
-        frames: [
-          { key: 'sockroach_stomp_1' },
-          { key: 'sockroach_stomp_2' }
-        ],
-        frameRate: 10,
-        repeat: 0
-      });
+      anims.createFromAseprite('bananarchrist');
     }
   }
 
   constructor(scene, x, y, playerHeight, { speed = 60, range = 200, map, groundLayers = [] } = {}) {
-    super(scene, x, y, 'sockroach_walk_1');
+    super(scene, x, y, 'bananarchrist', 'Bananarchist 2 0.aseprite');
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
@@ -59,11 +37,13 @@ export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
     this.map = map;
     this.groundLayers = groundLayers;
     this.edgeCooldownUntil = 0;
+    this.alive = true;
+    this.enemyKind = 'bananarchrist';
+    this.animKeys = ANIM_KEYS;
+
     // Move left initially
     this.setVelocityX(-this.speed);
-    this.alive = true;
-    this.enemyKind = 'sockroach';
-    this.animKeys = ANIM_KEYS;
+    this.play(this.animKeys.idle, true);
   }
 
   hasGroundAt(x, y) {
@@ -75,11 +55,9 @@ export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
   }
 
   aboutToFall() {
-    // Look one step ahead and slightly below the feet
     const dir = Math.sign(this.body.velocity.x || -1) || -1;
     const aheadX = this.x + dir * (this.body.width / 2 + 2);
     const belowY = this.body.bottom + 2;
-    // Sample a few points to be robust to thin tiles/edges
     const offsets = [0, 3 * dir, -3 * dir];
     for (const off of offsets) {
       if (this.hasGroundAt(aheadX + off, belowY)) return false;
@@ -99,15 +77,29 @@ export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
     if (shouldFlip && now >= this.edgeCooldownUntil) {
       const newDir = -dir || -1;
       this.setVelocityX(newDir * this.speed);
-      this.edgeCooldownUntil = now + 200; // debounce flips
+      this.edgeCooldownUntil = now + 200;
     }
-    // Nudge if somehow stopped
     if (Math.abs(this.body.velocity.x) < 1) {
       const nudgeDir = this.body.blocked.left ? 1 : (this.body.blocked.right ? -1 : dir || -1);
       this.setVelocityX(nudgeDir * this.speed);
     }
     this.flipX = this.body.velocity.x > 0;
+
+    const stompKey = this.animKeys?.stomp;
+    if (this.anims?.currentAnim?.key === stompKey) return;
+    const vx = this.body.velocity.x;
+    if (Math.abs(vx) > 2) {
+      const walkKey = this.animKeys?.walk;
+      if (walkKey && this.anims?.currentAnim?.key !== walkKey) {
+        this.play(walkKey, true);
+      }
+    } else {
+      const idleKey = this.animKeys?.idle;
+      if (idleKey && this.anims?.currentAnim?.key !== idleKey) {
+        this.play(idleKey, true);
+      }
+    }
   }
 }
 
-Sockroach.ANIM_KEYS = ANIM_KEYS;
+Bananarchrist.ANIM_KEYS = ANIM_KEYS;
