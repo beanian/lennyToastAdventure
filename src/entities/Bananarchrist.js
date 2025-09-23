@@ -47,13 +47,10 @@ export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
     this.speed = Number.isFinite(speed) && speed > 0 ? speed : 60;
     this.map = map;
     this.groundLayers = groundLayers;
-    this.waitingToTurn = false;
-    this.pendingDirection = null;
-    this.idleUntil = 0;
+    this.edgeCooldownUntil = 0;
     this.alive = true;
     this.enemyKind = 'bananarchrist';
     this.animKeys = ANIM_KEYS;
-    this.lastDirection = -1;
 
     // Move left initially
     this.setVelocityX(-this.speed);
@@ -84,56 +81,24 @@ export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
 
   update() {
     if (!this.alive) return;
+    const dir = Math.sign(this.body.velocity.x || -1) || -1;
     const now = this.scene.time.now || 0;
-    if (this.waitingToTurn) {
-      if (now >= this.idleUntil) {
-        const resumeDir = this.pendingDirection || -this.lastDirection || -1;
-        this.setVelocityX(resumeDir * this.speed);
-        this.lastDirection = Math.sign(resumeDir) || -1;
-        this.waitingToTurn = false;
-        this.pendingDirection = null;
-        this.idleUntil = 0;
-      } else {
-        this.setVelocityX(0);
-        const idleKey = this.animKeys?.idle;
-        if (idleKey && this.anims?.currentAnim?.key !== idleKey) {
-          this.play(idleKey);
-        }
-        return;
-      }
-    }
-
-    let dir = Math.sign(this.body.velocity.x);
-    if (!dir) dir = this.lastDirection || -1;
-    this.lastDirection = dir;
     const atLeftBound = this.x <= this.patrolLeft + 2;
     const atRightBound = this.x >= this.patrolRight - 2;
     const hitWall = this.body.blocked.left || this.body.blocked.right;
     const edge = this.body.blocked.down && this.aboutToFall();
-    const shouldFlip =
-      (atLeftBound && dir <= 0) ||
-      (atRightBound && dir >= 0) ||
-      hitWall ||
-      edge;
-    if (shouldFlip) {
-      this.waitingToTurn = true;
-      this.pendingDirection = -dir || -1;
-      this.idleUntil = now + 2000;
-      this.setVelocityX(0);
-      const idleKey = this.animKeys?.idle;
-      if (idleKey && this.anims?.currentAnim?.key !== idleKey) {
-        this.play(idleKey);
-      }
-      return;
+    const shouldFlip = atLeftBound || atRightBound || hitWall || edge;
+    if (shouldFlip && now >= this.edgeCooldownUntil) {
+      const newDir = -dir || -1;
+      this.setVelocityX(newDir * this.speed);
+      this.edgeCooldownUntil = now + 200;
     }
     if (Math.abs(this.body.velocity.x) < 1) {
       const nudgeDir = this.body.blocked.left ? 1 : (this.body.blocked.right ? -1 : dir || -1);
       this.setVelocityX(nudgeDir * this.speed);
-      this.lastDirection = Math.sign(nudgeDir) || this.lastDirection || -1;
     }
     if (this.body.velocity.x !== 0) {
       this.setFlipX(this.body.velocity.x < 0);
-      this.lastDirection = Math.sign(this.body.velocity.x) || this.lastDirection || -1;
     }
 
     const stompKey = this.animKeys?.stomp;
