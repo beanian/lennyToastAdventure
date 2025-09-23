@@ -57,15 +57,24 @@ export default class WelcomeScene extends Phaser.Scene {
   }
 
   createSecretTestButton(width, height) {
-    const secretButton = this.add.zone(width * 0.98, height * 0.06, width * 0.08, height * 0.08);
-    secretButton.setOrigin(1, 0);
-    secretButton.setInteractive();
-    secretButton.setAlpha(0);
-    secretButton.setData('uiElement', true);
-    secretButton.on('pointerup', () => {
+    const button = this.add.text(width * 0.98, height * 0.08, 'Bananarchrist Test', {
+      fontFamily: 'monospace',
+      fontSize: '28px',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 6,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      padding: { x: 12, y: 8 }
+    });
+    button.setOrigin(1, 0.5);
+    button.setInteractive({ useHandCursor: true });
+    button.setData('uiElement', true);
+    button.on('pointerover', () => button.setStyle({ color: '#ffcc00' }));
+    button.on('pointerout', () => button.setStyle({ color: '#ffffff' }));
+    button.on('pointerup', () => {
       this.startBananarchristTest();
     });
-    this.secretTestButton = secretButton;
+    this.secretTestButton = button;
   }
 
   createChangeLogUI(width, height, frame) {
