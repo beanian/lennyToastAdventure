@@ -293,24 +293,6 @@
                  "y":573
                 },
                 {
-                 "height":64,
-                 "id":75,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"kind",
-                         "type":"string",
-                         "value":"bananarchrist"
-                        }
-                 ],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":64,
-                 "x":180,
-                 "y":600
-                },
-                {
                  "gid":81,
                  "height":63,
                  "id":60,

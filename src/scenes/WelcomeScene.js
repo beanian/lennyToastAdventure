@@ -35,6 +35,7 @@ export default class WelcomeScene extends Phaser.Scene {
     // prompt.setOrigin(0.5);
 
     this.createChangeLogUI(width, height, frame);
+    this.createSecretTestButton(width, height);
 
     this.input.keyboard.once('keydown-SPACE', this.startGame, this);
     this.input.keyboard.once('keydown-ENTER', this.startGame, this);
@@ -53,6 +54,18 @@ export default class WelcomeScene extends Phaser.Scene {
     if (this.input.gamepad) {
       this.input.gamepad.once('down', this.startGame, this);
     }
+  }
+
+  createSecretTestButton(width, height) {
+    const secretButton = this.add.zone(width * 0.98, height * 0.06, width * 0.08, height * 0.08);
+    secretButton.setOrigin(1, 0);
+    secretButton.setInteractive();
+    secretButton.setAlpha(0);
+    secretButton.setData('uiElement', true);
+    secretButton.on('pointerup', () => {
+      this.startBananarchristTest();
+    });
+    this.secretTestButton = secretButton;
   }
 
   createChangeLogUI(width, height, frame) {
@@ -128,7 +141,7 @@ export default class WelcomeScene extends Phaser.Scene {
     this.changeLogPanel = panelContainer;
   }
 
-  startGame() {
+  cleanupAndHideUI() {
     if (this.changeLogPanel?.visible) {
       this.changeLogPanel.setVisible(false);
     }
@@ -136,6 +149,15 @@ export default class WelcomeScene extends Phaser.Scene {
       this.input.off('pointerdown', this.handlePointerDown, this);
       this.handlePointerDown = null;
     }
+  }
+
+  startGame() {
+    this.cleanupAndHideUI();
     this.scene.start('Level1');
+  }
+
+  startBananarchristTest() {
+    this.cleanupAndHideUI();
+    this.scene.start('BananarchristTest');
   }
 }
