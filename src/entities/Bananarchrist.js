@@ -8,7 +8,18 @@ export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
   static createAnimations(scene) {
     const anims = scene.anims;
     if (!anims.exists(ANIM_KEYS.walk)) {
-      anims.createFromAseprite('bananarchrist');
+      const created = anims.createFromAseprite('bananarchrist');
+      // Ensure the looping behaviour of the imported clips matches gameplay expectations.
+      created
+        ?.filter(anim => anim?.key)
+        ?.forEach(anim => {
+          if (anim.key === ANIM_KEYS.walk || anim.key === ANIM_KEYS.idle) {
+            anim.repeat = -1;
+          }
+          if (anim.key === ANIM_KEYS.idle) {
+            anim.yoyo = true;
+          }
+        });
     }
   }
 
@@ -18,7 +29,7 @@ export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
     scene.physics.add.existing(this);
 
     const scale = playerHeight / this.height;
-    this.setScale(scale * 0.6);
+    this.setScale(scale * 0.85);
     const bodyWidth = this.displayWidth * 0.9;
     const bodyHeight = this.displayHeight * 0.9;
     this.body.setSize(bodyWidth, bodyHeight);
@@ -83,7 +94,9 @@ export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
       const nudgeDir = this.body.blocked.left ? 1 : (this.body.blocked.right ? -1 : dir || -1);
       this.setVelocityX(nudgeDir * this.speed);
     }
-    this.flipX = this.body.velocity.x > 0;
+    if (this.body.velocity.x !== 0) {
+      this.setFlipX(this.body.velocity.x < 0);
+    }
 
     const stompKey = this.animKeys?.stomp;
     if (this.anims?.currentAnim?.key === stompKey) return;
@@ -91,12 +104,12 @@ export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
     if (Math.abs(vx) > 2) {
       const walkKey = this.animKeys?.walk;
       if (walkKey && this.anims?.currentAnim?.key !== walkKey) {
-        this.play(walkKey, true);
+        this.play(walkKey);
       }
     } else {
       const idleKey = this.animKeys?.idle;
       if (idleKey && this.anims?.currentAnim?.key !== idleKey) {
-        this.play(idleKey, true);
+        this.play(idleKey);
       }
     }
   }
