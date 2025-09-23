@@ -279,7 +279,7 @@
          "draworder":"topdown",
          "id":9,
          "name":"Objects",
-         "objects":[
+        "objects":[
                 {
                  "gid":78,
                  "height":56.5,
@@ -291,7 +291,7 @@
                  "width":54,
                  "x":98.5,
                  "y":573
-                }, 
+                },
                 {
                  "gid":81,
                  "height":63,
@@ -448,7 +448,7 @@
          "y":0
         }],
  "nextlayerid":10,
- "nextobjectid":75,
+ "nextobjectid":76,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",

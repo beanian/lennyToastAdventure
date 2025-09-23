@@ -1,9 +1,14 @@
+const ANIM_KEYS = {
+  walk: 'sockroach_walk',
+  stomp: 'sockroach_stomp'
+};
+
 export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
   static createAnimations(scene) {
     const anims = scene.anims;
-    if (!anims.exists('sockroach_walk')) {
+    if (!anims.exists(ANIM_KEYS.walk)) {
       anims.create({
-        key: 'sockroach_walk',
+        key: ANIM_KEYS.walk,
         frames: [
           { key: 'sockroach_walk_1' },
           { key: 'sockroach_walk_2' },
@@ -16,9 +21,9 @@ export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
       });
     }
 
-    if (!anims.exists('sockroach_stomp')) {
+    if (!anims.exists(ANIM_KEYS.stomp)) {
       anims.create({
-        key: 'sockroach_stomp',
+        key: ANIM_KEYS.stomp,
         frames: [
           { key: 'sockroach_stomp_1' },
           { key: 'sockroach_stomp_2' }
@@ -57,6 +62,8 @@ export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
     // Move left initially
     this.setVelocityX(-this.speed);
     this.alive = true;
+    this.enemyKind = 'sockroach';
+    this.animKeys = ANIM_KEYS;
   }
 
   hasGroundAt(x, y) {
@@ -102,3 +109,5 @@ export default class Sockroach extends Phaser.Physics.Arcade.Sprite {
     this.flipX = this.body.velocity.x > 0;
   }
 }
+
+Sockroach.ANIM_KEYS = ANIM_KEYS;

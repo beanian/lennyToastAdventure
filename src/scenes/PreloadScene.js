@@ -24,6 +24,11 @@ export default class PreloadScene extends Phaser.Scene {
 
     // Images/audio: load as-is (server already disables cache)
     manifest.images.forEach(asset => this.load.image(asset.key, asset.url));
+    if (Array.isArray(manifest.aseprites)) {
+      manifest.aseprites.forEach(asset =>
+        this.load.aseprite(asset.key, asset.textureURL, asset.atlasURL)
+      );
+    }
     manifest.audio.forEach(asset => this.load.audio(asset.key, asset.url));
     // Tilemaps: append version to ensure the latest map loads
     manifest.tilemaps.forEach(asset =>

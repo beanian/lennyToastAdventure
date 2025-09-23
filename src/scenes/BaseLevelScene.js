@@ -141,6 +141,7 @@ export default class BaseLevelScene extends Phaser.Scene {
       if (!kind) {
         const nameL = (obj.name || '').toLowerCase();
         if (/spawn|player/.test(nameL)) kind = 'player';
+        else if (/bananarchrist|banana/.test(nameL)) kind = 'bananarchrist';
         else if (/sockroach|roach|enemy/.test(nameL)) kind = 'sockroach';
         else if (/toast|collect/.test(nameL)) kind = 'toast';
       }
@@ -250,9 +251,9 @@ export default class BaseLevelScene extends Phaser.Scene {
           const zy = y + h / 2;
           this.levelEndZone = this.add.zone(zx, zy, w, h);
           this.physics.add.existing(this.levelEndZone, true);
-        } else if (info.kind === 'sockroach') {
+        } else if (info.kind === 'sockroach' || info.kind === 'bananarchrist') {
           // Support optional pathName for polyline patrols; else fall back to patrolWidth or default
-          spawnEnemy(this, 'sockroach', x, y, info.props, map, groundLayers);
+          spawnEnemy(this, info.kind, x, y, info.props, map, groundLayers);
         } else if (info.kind === 'toast') {
           spawnCollectible(this, 'toast', x, y, info.props);
         } else if (info.kind && info.kind !== 'player') {
@@ -377,13 +378,16 @@ export default class BaseLevelScene extends Phaser.Scene {
     if (falling && playerBottom <= enemyTop + 5) {
       sfx('landEnemy');
       enemy.alive = false;
-      enemy.play('sockroach_stomp');
+      const stompKey = enemy.animKeys?.stomp || 'sockroach_stomp';
+      enemy.play(stompKey);
       enemy.setVelocity(0, 0);
       playerObj.setVelocityY(-300);
       enemy.body.checkCollision.none = true;
       enemy.setCollideWorldBounds(false);
-      this.sockroachKills = addSockroachKill();
-      enemy.once('animationcomplete-sockroach_stomp', () => {
+      if (enemy.enemyKind === 'sockroach') {
+        this.sockroachKills = addSockroachKill();
+      }
+      enemy.once(`animationcomplete-${stompKey}`, () => {
         enemy.setVelocityY(-200);
         this.time.delayedCall(1000, () => enemy.destroy());
       });

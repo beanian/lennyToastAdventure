@@ -35,6 +35,7 @@ export default class WelcomeScene extends Phaser.Scene {
     // prompt.setOrigin(0.5);
 
     this.createChangeLogUI(width, height, frame);
+    this.createSecretTestButton(width, height);
 
     this.input.keyboard.once('keydown-SPACE', this.startGame, this);
     this.input.keyboard.once('keydown-ENTER', this.startGame, this);
@@ -53,6 +54,27 @@ export default class WelcomeScene extends Phaser.Scene {
     if (this.input.gamepad) {
       this.input.gamepad.once('down', this.startGame, this);
     }
+  }
+
+  createSecretTestButton(width, height) {
+    const button = this.add.text(width * 0.98, height * 0.08, 'Bananarchrist Test', {
+      fontFamily: 'monospace',
+      fontSize: '28px',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 6,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      padding: { x: 12, y: 8 }
+    });
+    button.setOrigin(1, 0.5);
+    button.setInteractive({ useHandCursor: true });
+    button.setData('uiElement', true);
+    button.on('pointerover', () => button.setStyle({ color: '#ffcc00' }));
+    button.on('pointerout', () => button.setStyle({ color: '#ffffff' }));
+    button.on('pointerup', () => {
+      this.startBananarchristTest();
+    });
+    this.secretTestButton = button;
   }
 
   createChangeLogUI(width, height, frame) {
@@ -128,7 +150,7 @@ export default class WelcomeScene extends Phaser.Scene {
     this.changeLogPanel = panelContainer;
   }
 
-  startGame() {
+  cleanupAndHideUI() {
     if (this.changeLogPanel?.visible) {
       this.changeLogPanel.setVisible(false);
     }
@@ -136,6 +158,15 @@ export default class WelcomeScene extends Phaser.Scene {
       this.input.off('pointerdown', this.handlePointerDown, this);
       this.handlePointerDown = null;
     }
+  }
+
+  startGame() {
+    this.cleanupAndHideUI();
     this.scene.start('Level1');
+  }
+
+  startBananarchristTest() {
+    this.cleanupAndHideUI();
+    this.scene.start('BananarchristTest');
   }
 }
