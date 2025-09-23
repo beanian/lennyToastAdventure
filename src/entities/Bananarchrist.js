@@ -1,7 +1,7 @@
 const ANIM_KEYS = {
-  walk: 'bananarchrist_Walk',
-  idle: 'bananarchrist_Idle',
-  stomp: 'bananarchrist_Stomp'
+  walk: 'Walk',
+  idle: 'Idle',
+  stomp: 'Stomp'
 };
 
 export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
@@ -24,18 +24,18 @@ export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
   }
 
   constructor(scene, x, y, playerHeight, { speed = 60, range = 200, map, groundLayers = [] } = {}) {
-    super(scene, x, y, 'bananarchrist', 'Bananarchist 2 0.aseprite');
+    super(scene, x, y, 'bananarchrist');
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
     const scale = playerHeight / this.height;
-    this.setScale(scale * 0.85);
+    this.setScale(scale * 1.5);
     const bodyWidth = this.displayWidth * 0.9;
     const bodyHeight = this.displayHeight * 0.9;
     this.body.setSize(bodyWidth, bodyHeight);
     this.body.setOffset(
       (this.displayWidth - bodyWidth) / 2,
-      (this.displayHeight - bodyHeight) + 22
+      (this.displayHeight - bodyHeight) -18
     );
 
     this.setCollideWorldBounds(true);

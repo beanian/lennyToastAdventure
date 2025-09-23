@@ -1,86 +1,88 @@
-{ "frames": {
-   "Bananarchist 2 0.aseprite": {
-    "frame": { "x": 0, "y": 0, "w": 64, "h": 64 },
+{ "frames": [
+   {
+    "filename": "0",
+    "frame": { "x": 0, "y": 0, "w": 39, "h": 44 },
     "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
+    "trimmed": true,
+    "spriteSourceSize": { "x": 18, "y": 16, "w": 39, "h": 44 },
     "sourceSize": { "w": 64, "h": 64 },
     "duration": 200
    },
-   "Bananarchist 2 1.aseprite": {
-    "frame": { "x": 64, "y": 0, "w": 64, "h": 64 },
+   {
+    "filename": "1",
+    "frame": { "x": 39, "y": 0, "w": 39, "h": 44 },
     "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
+    "trimmed": true,
+    "spriteSourceSize": { "x": 18, "y": 16, "w": 39, "h": 44 },
     "sourceSize": { "w": 64, "h": 64 },
     "duration": 200
    },
-   "Bananarchist 2 2.aseprite": {
-    "frame": { "x": 128, "y": 0, "w": 64, "h": 64 },
+   {
+    "filename": "2",
+    "frame": { "x": 78, "y": 0, "w": 39, "h": 43 },
     "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
+    "trimmed": true,
+    "spriteSourceSize": { "x": 18, "y": 17, "w": 39, "h": 43 },
     "sourceSize": { "w": 64, "h": 64 },
     "duration": 200
    },
-   "Bananarchist 2 3.aseprite": {
-    "frame": { "x": 0, "y": 0, "w": 64, "h": 64 },
+   {
+    "filename": "3",
+    "frame": { "x": 117, "y": 0, "w": 39, "h": 44 },
     "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
+    "trimmed": true,
+    "spriteSourceSize": { "x": 18, "y": 16, "w": 39, "h": 44 },
     "sourceSize": { "w": 64, "h": 64 },
     "duration": 200
    },
-   "Bananarchist 2 4.aseprite": {
-    "frame": { "x": 0, "y": 64, "w": 64, "h": 64 },
+   {
+    "filename": "4",
+    "frame": { "x": 156, "y": 0, "w": 44, "h": 29 },
     "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
+    "trimmed": true,
+    "spriteSourceSize": { "x": 17, "y": 31, "w": 44, "h": 29 },
     "sourceSize": { "w": 64, "h": 64 },
     "duration": 200
    },
-   "Bananarchist 2 5.aseprite": {
-    "frame": { "x": 64, "y": 64, "w": 64, "h": 64 },
+   {
+    "filename": "5",
+    "frame": { "x": 200, "y": 0, "w": 44, "h": 29 },
     "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
+    "trimmed": true,
+    "spriteSourceSize": { "x": 17, "y": 31, "w": 44, "h": 29 },
     "sourceSize": { "w": 64, "h": 64 },
     "duration": 200
    },
-   "Bananarchist 2 6.aseprite": {
-    "frame": { "x": 128, "y": 64, "w": 64, "h": 64 },
+   {
+    "filename": "6",
+    "frame": { "x": 244, "y": 0, "w": 44, "h": 29 },
     "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
+    "trimmed": true,
+    "spriteSourceSize": { "x": 17, "y": 31, "w": 44, "h": 29 },
     "sourceSize": { "w": 64, "h": 64 },
     "duration": 200
    },
-   "Bananarchist 2 7.aseprite": {
-    "frame": { "x": 0, "y": 128, "w": 64, "h": 64 },
+   {
+    "filename": "7",
+    "frame": { "x": 288, "y": 0, "w": 44, "h": 29 },
     "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 64 },
+    "trimmed": true,
+    "spriteSourceSize": { "x": 17, "y": 31, "w": 44, "h": 29 },
     "sourceSize": { "w": 64, "h": 64 },
     "duration": 200
    }
- },
+ ],
  "meta": {
   "app": "https://www.aseprite.org/",
   "version": "1.3.15.2-x64",
   "image": "Bananarchist 2.png",
   "format": "RGBA8888",
-  "size": { "w": 192, "h": 192 },
+  "size": { "w": 332, "h": 44 },
   "scale": "1",
   "frameTags": [
    { "name": "Walk", "from": 0, "to": 1, "direction": "forward", "color": "#000000ff" },
    { "name": "Idle", "from": 2, "to": 3, "direction": "pingpong", "color": "#000000ff" },
    { "name": "Stomp", "from": 4, "to": 7, "direction": "forward", "color": "#000000ff" }
-  ],
-  "layers": [
-   { "name": "Reference Layer 1", "opacity": 0, "blendMode": "normal" },
-   { "name": "Layer 1", "opacity": 255, "blendMode": "normal" }
-  ],
-  "slices": [
   ]
  }
 }

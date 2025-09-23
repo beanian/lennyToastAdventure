@@ -64,7 +64,7 @@ export default class BananarchristTestScene extends BaseLevelScene {
     this.player = new Player(this, spawnX, spawnY, this.inputService);
     this.spawnPoint = { x: spawnX, y: spawnY };
 
-    const enemy = new Bananarchrist(this, WORLD_WIDTH * 0.6, spawnY, this.player.displayHeight, {
+    const enemy = new Bananarchrist(this, WORLD_WIDTH * 0.6, spawnY-50, this.player.displayHeight, {
       speed: 70,
       range: 320
     });
