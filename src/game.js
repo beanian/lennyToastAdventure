@@ -3,7 +3,7 @@ import BootScene from './scenes/BootScene.js';
 import PreloadScene from './scenes/PreloadScene.js';
 import WelcomeScene from './scenes/WelcomeScene.js';
 import Level1Scene from './scenes/Level1Scene.js';
-import BananarchristTestScene from './scenes/BananarchristTestScene.js';
+import BananarchistTestScene from './scenes/BananarchistTestScene.js';
 
 document.title = `Lenny Toast Quest ${VERSION}`;
 
@@ -26,7 +26,7 @@ const config = {
     default: 'arcade',
     arcade: { gravity: { y: 700 }, debug: DEBUG.enabled }
   },
-  scene: [BootScene, PreloadScene, WelcomeScene, Level1Scene, BananarchristTestScene]
+  scene: [BootScene, PreloadScene, WelcomeScene, Level1Scene, BananarchistTestScene]
 };
 
 new Phaser.Game(config);

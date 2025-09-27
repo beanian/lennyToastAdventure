@@ -4,11 +4,11 @@ const ANIM_KEYS = {
   stomp: 'Stomp'
 };
 
-export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
+export default class Bananarchist extends Phaser.Physics.Arcade.Sprite {
   static createAnimations(scene) {
     const anims = scene.anims;
     if (!anims.exists(ANIM_KEYS.walk)) {
-      const created = anims.createFromAseprite('bananarchrist');
+      const created = anims.createFromAseprite('bananarchist');
       // Ensure the looping behaviour of the imported clips matches gameplay expectations.
       created
         ?.filter(anim => anim?.key)
@@ -24,7 +24,7 @@ export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
   }
 
   constructor(scene, x, y, playerHeight, { speed = 60, range = 200, map, groundLayers = [] } = {}) {
-    super(scene, x, y, 'bananarchrist');
+    super(scene, x, y, 'bananarchist');
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
@@ -51,7 +51,7 @@ export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
     this.pendingDirection = null;
     this.idleUntil = 0;
     this.alive = true;
-    this.enemyKind = 'bananarchrist';
+    this.enemyKind = 'bananarchist';
     this.animKeys = ANIM_KEYS;
     this.lastDirection = -1;
 
@@ -59,7 +59,7 @@ export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
     this.setVelocityX(-this.speed);
     this.play(this.animKeys.idle, true);
   }
-
+ 
   hasGroundAt(x, y) {
     if (!this.map || !Array.isArray(this.groundLayers) || this.groundLayers.length === 0) {
       return true;
@@ -153,4 +153,4 @@ export default class Bananarchrist extends Phaser.Physics.Arcade.Sprite {
   }
 }
 
-Bananarchrist.ANIM_KEYS = ANIM_KEYS;
+Bananarchist.ANIM_KEYS = ANIM_KEYS;

@@ -36,7 +36,7 @@ const manifest = {
   ],
   aseprites: [
     {
-      key: 'bananarchrist',
+      key: 'bananarchist',
       textureURL: new URL('./sprites/bananarchist/Bananarchist 2.png', import.meta.url).href,
       atlasURL: new URL('./sprites/bananarchist/Bananarchist 2.json', import.meta.url).href
     }

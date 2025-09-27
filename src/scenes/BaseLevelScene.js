@@ -141,7 +141,7 @@ export default class BaseLevelScene extends Phaser.Scene {
       if (!kind) {
         const nameL = (obj.name || '').toLowerCase();
         if (/spawn|player/.test(nameL)) kind = 'player';
-        else if (/bananarchrist|banana/.test(nameL)) kind = 'bananarchrist';
+        else if (/bananarchist|banana/.test(nameL)) kind = 'bananarchist';
         else if (/sockroach|roach|enemy/.test(nameL)) kind = 'sockroach';
         else if (/toast|collect/.test(nameL)) kind = 'toast';
       }
@@ -251,7 +251,7 @@ export default class BaseLevelScene extends Phaser.Scene {
           const zy = y + h / 2;
           this.levelEndZone = this.add.zone(zx, zy, w, h);
           this.physics.add.existing(this.levelEndZone, true);
-        } else if (info.kind === 'sockroach' || info.kind === 'bananarchrist') {
+        } else if (info.kind === 'sockroach' || info.kind === 'bananarchist') {
           // Support optional pathName for polyline patrols; else fall back to patrolWidth or default
           spawnEnemy(this, info.kind, x, y, info.props, map, groundLayers);
         } else if (info.kind === 'toast') {

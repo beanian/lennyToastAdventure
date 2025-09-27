@@ -1,7 +1,7 @@
 /* global Phaser */
 import BaseLevelScene from './BaseLevelScene.js';
 import Player from '../entities/Player.js';
-import Bananarchrist from '../entities/Bananarchrist.js';
+import Bananarchist from '../entities/Bananarchist.js';
 import { init as audioInit, music } from '../AudioBus.js';
 import InputService from '../services/InputService.js';
 import MobileControls from '../services/MobileControls.js';
@@ -14,9 +14,9 @@ const WORLD_WIDTH = 1600;
 const WORLD_HEIGHT = 900;
 const GROUND_HEIGHT = 64;
 
-export default class BananarchristTestScene extends BaseLevelScene {
+export default class BananarchistTestScene extends BaseLevelScene {
   constructor() {
-    super('BananarchristTest', null);
+    super('BananarchistTest', null);
   }
 
   create() {
@@ -35,7 +35,7 @@ export default class BananarchristTestScene extends BaseLevelScene {
     this.collectibles = this.physics.add.group({ allowGravity: false, immovable: true });
 
     Player.createAnimations(this);
-    Bananarchrist.createAnimations(this);
+    Bananarchist.createAnimations(this);
 
     this.inputService = new InputService(this);
     this.mobileControls = new MobileControls(this, this.inputService);
@@ -64,7 +64,7 @@ export default class BananarchristTestScene extends BaseLevelScene {
     this.player = new Player(this, spawnX, spawnY, this.inputService);
     this.spawnPoint = { x: spawnX, y: spawnY };
 
-    const enemy = new Bananarchrist(this, WORLD_WIDTH * 0.4, spawnY-100, this.player.displayHeight, {
+    const enemy = new Bananarchist(this, WORLD_WIDTH * 0.4, spawnY-100, this.player.displayHeight, {
       speed: 70,
       range: 320
     });

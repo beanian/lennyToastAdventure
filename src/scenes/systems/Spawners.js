@@ -1,10 +1,10 @@
 import Sockroach from '../../entities/Sockroach.js';
-import Bananarchrist from '../../entities/Bananarchrist.js';
+import Bananarchist from '../../entities/Bananarchist.js';
 import { collectToast } from './HUD.js';
 
 const ENEMY_TYPES = {
   sockroach: Sockroach,
-  bananarchrist: Bananarchrist
+  bananarchist: Bananarchist
 };
 
 export function spawnEnemy(scene, kind, x, y, props, map, groundLayers = []) {

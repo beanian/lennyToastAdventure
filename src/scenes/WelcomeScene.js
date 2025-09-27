@@ -57,7 +57,7 @@ export default class WelcomeScene extends Phaser.Scene {
   }
 
   createSecretTestButton(width, height) {
-    const button = this.add.text(width * 0.98, height * 0.08, 'Bananarchrist Test', {
+    const button = this.add.text(width * 0.98, height * 0.08, 'Bananarchist Test', {
       fontFamily: 'monospace',
       fontSize: '28px',
       color: '#ffffff',
@@ -72,7 +72,7 @@ export default class WelcomeScene extends Phaser.Scene {
     button.on('pointerover', () => button.setStyle({ color: '#ffcc00' }));
     button.on('pointerout', () => button.setStyle({ color: '#ffffff' }));
     button.on('pointerup', () => {
-      this.startBananarchristTest();
+      this.startBananarchistTest();
     });
     this.secretTestButton = button;
   }
@@ -165,8 +165,8 @@ export default class WelcomeScene extends Phaser.Scene {
     this.scene.start('Level1');
   }
 
-  startBananarchristTest() {
+  startBananarchistTest() {
     this.cleanupAndHideUI();
-    this.scene.start('BananarchristTest');
+    this.scene.start('BananarchistTest');
   }
 }
