@@ -1,4 +1,5 @@
 import { sfx } from '../AudioBus.js';
+import { PLAYER_TUNING } from '../data/playerTuning.js';
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   static createAnimations(scene) {
@@ -31,31 +32,31 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
-    const scale = 0.8;
+    const scale = PLAYER_TUNING.scale;
     this.setScale(scale);
     this.setOrigin(0.5, 1);
     this.setCollideWorldBounds(true);
     this.setDepth(1);
     // Trim transparent bounds so Lenny's feet sit flush with the ground
-    this.body.setSize(48 * scale, 45 * scale);
-    this.body.setOffset(10 * scale, 18 * scale);
+    this.body.setSize(PLAYER_TUNING.bodyWidth * scale, PLAYER_TUNING.bodyHeight * scale);
+    this.body.setOffset(PLAYER_TUNING.bodyOffsetX * scale, PLAYER_TUNING.bodyOffsetY * scale);
 
     // Store input service under a non-reserved property to avoid clashing
     // with Phaser's own `input` component on game objects
     this.inputService = inputService;
-    this.jumpCount = 0;
+    this.airJumpsUsed = 0;
   }
 
   update() {
     const onGround = this.body.blocked.down;
-    if (onGround) this.jumpCount = 0;
+    if (onGround) this.airJumpsUsed = 0;
 
     if (this.inputService.left()) {
-      this.setVelocityX(-160);
+      this.setVelocityX(-PLAYER_TUNING.moveSpeed);
       this.setFlipX(true);
       if (onGround) this.play('walk', true);
     } else if (this.inputService.right()) {
-      this.setVelocityX(160);
+      this.setVelocityX(PLAYER_TUNING.moveSpeed);
       this.setFlipX(false);
       if (onGround) this.play('walk', true);
     } else {
@@ -64,10 +65,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     const jumpPressed = this.inputService.jumpJustPressed();
-    if (jumpPressed && (onGround || this.jumpCount < 2)) {
-      this.setVelocityY(-450);
+    if (jumpPressed && onGround) {
+      this.setVelocityY(PLAYER_TUNING.groundJumpVelocity);
       sfx('jump');
-      this.jumpCount++;
+      this.anims.stop();
+      this.setTexture('lenny_jump_1');
+    } else if (jumpPressed && this.airJumpsUsed < PLAYER_TUNING.maxAirJumps) {
+      this.setVelocityY(PLAYER_TUNING.airJumpVelocity);
+      sfx('jump');
+      this.airJumpsUsed++;
       this.anims.stop();
       this.setTexture('lenny_jump_1');
     }

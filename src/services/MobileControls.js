@@ -19,10 +19,16 @@ const removeCoarseListener = handler => {
 };
 
 export const shouldEnableControls = () => {
+  if (isPortraitBlocked()) return false;
   const coarse = coarseMedia?.matches;
   if (coarse) return true;
   const width = typeof window !== 'undefined' ? window.innerWidth : 0;
   return width > 0 && width <= 1024;
+};
+
+export const isPortraitBlocked = () => {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth <= 700 && window.innerHeight > window.innerWidth;
 };
 
 const stopEvent = event => {
@@ -43,6 +49,7 @@ export default class MobileControls {
 
     this._buttons = {};
     this._active = { left: false, right: false, jump: false };
+    this._overlayBlocked = false;
 
     this._createLayout();
 
@@ -69,9 +76,9 @@ export default class MobileControls {
     this.root.appendChild(dpad);
     this.root.appendChild(jumpCluster);
 
-    this._buttons.left = this._createButton('◀', 'left', dpad);
-    this._buttons.right = this._createButton('▶', 'right', dpad);
-    this._buttons.jump = this._createButton('⤒', 'jump', jumpCluster);
+    this._buttons.left = this._createButton('<', 'left', dpad);
+    this._buttons.right = this._createButton('>', 'right', dpad);
+    this._buttons.jump = this._createButton('^', 'jump', jumpCluster);
   }
 
   _createButton(label, direction, parent) {
@@ -148,12 +155,17 @@ export default class MobileControls {
 
   updateVisibility() {
     if (!this.root) return;
-    const visible = shouldEnableControls();
+    const visible = shouldEnableControls() && !this._overlayBlocked;
     this.root.classList.toggle('mobile-controls--visible', visible);
     this.root.setAttribute('aria-hidden', visible ? 'false' : 'true');
     if (!visible) {
       this._resetInputs();
     }
+  }
+
+  setOverlayBlocked(isBlocked) {
+    this._overlayBlocked = !!isBlocked;
+    this.updateVisibility();
   }
 
   _resetInputs() {

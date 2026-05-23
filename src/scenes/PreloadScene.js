@@ -6,6 +6,26 @@ function bust(url) {
   return `${url}${sep}v=${VERSION}`;
 }
 
+function loadImages(scene, images = []) {
+  images.forEach(asset => scene.load.image(asset.key, asset.url));
+}
+
+function loadAseprites(scene, aseprites = []) {
+  aseprites.forEach(asset =>
+    scene.load.aseprite(asset.key, asset.textureURL, asset.atlasURL)
+  );
+}
+
+function loadAudio(scene, audio = []) {
+  audio.forEach(asset => scene.load.audio(asset.key, asset.url));
+}
+
+function loadTilemaps(scene, tilemaps = []) {
+  tilemaps.forEach(asset =>
+    scene.load.tilemapTiledJSON(asset.key, bust(asset.url))
+  );
+}
+
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
     super('Preload');
@@ -22,18 +42,12 @@ export default class PreloadScene extends Phaser.Scene {
       progressBar.fillRect(0, height / 2, width * value, 30);
     });
 
-    // Images/audio: load as-is (server already disables cache)
-    manifest.images.forEach(asset => this.load.image(asset.key, asset.url));
-    if (Array.isArray(manifest.aseprites)) {
-      manifest.aseprites.forEach(asset =>
-        this.load.aseprite(asset.key, asset.textureURL, asset.atlasURL)
-      );
-    }
-    manifest.audio.forEach(asset => this.load.audio(asset.key, asset.url));
-    // Tilemaps: append version to ensure the latest map loads
-    manifest.tilemaps.forEach(asset =>
-      this.load.tilemapTiledJSON(asset.key, bust(asset.url))
-    );
+    // Keep these phases separate so scene-specific loading can be moved out
+    // incrementally without changing asset declarations.
+    loadImages(this, manifest.images);
+    loadAseprites(this, manifest.aseprites);
+    loadAudio(this, manifest.audio);
+    loadTilemaps(this, manifest.tilemaps);
   }
 
   create() {

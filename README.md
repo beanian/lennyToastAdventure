@@ -8,10 +8,28 @@ Install dependencies and start a local server:
 
 ```bash
 npm install
-npm start
+npm run dev
 ```
 
-Then open http://localhost:8080 in your browser to view the placeholder game scene.
+Then open http://127.0.0.1:5180/ in your browser. Add `?debug=1` to expose debug-only tools and test scenes:
+
+```text
+http://127.0.0.1:5180/?debug=1
+```
+
+Build the production bundle with:
+
+```bash
+npm run build
+```
+
+Preview the production bundle locally with:
+
+```bash
+npm run preview
+```
+
+See `docs/REVIEW_CHECKPOINTS.md` for the desktop/mobile screenshot pass used before moving UI or camera tasks to review.
 
 ## Debugging
 
@@ -66,14 +84,18 @@ Create the following object layers to place entities, paths, and hazards.
 ### Coordinates and Spawning Notes
 
 - Tiled object Y-origin: The engine subtracts object height so objects align by bottom edge (spawn at `y - height`). This matches placing objects visually on the ground in Tiled.
-- Camera and world bounds: World size comes from the map’s pixel dimensions. The camera auto-zooms to fit map width (`zoom = GAME_WIDTH / map.widthInPixels`).
+- Camera and world bounds: World size comes from the map's pixel dimensions. Camera zoom is applied through presets in `src/constants.js` and `src/services/CameraPresets.js`.
 - Falling out of the world: If the player hits the bottom world bound, death is triggered immediately.
 
 ### Asset Keys and Map Registration
 
 - Images, audio, and tilemaps are defined in `src/assets/manifest.js`.
-  - Add new tilemaps under `tilemaps: [{ key: 'levelX', url: 'src/levels/levelX/map.tmj' }]`.
+  - Add new tilemaps under `tilemaps: [{ key: 'levelX', url: new URL('../levels/levelX/map.tmj', import.meta.url).href }]`.
   - Ensure your Tiled map references the tileset named `nature-paltformer-tileset-16x16` and that the image URL exists at `src/levels/.../*.png` with manifest key `tiles`.
+- Gameplay levels are registered in `src/data/levels.js`.
+  - Add a level entry with `id`, `sceneKey`, `mapKey`, and `title`.
+  - Add the scene class to `LEVEL_SCENES` in `src/game.js`.
+  - Use `START_LEVEL_ID` in `src/data/levels.js` to change the default Start Game target.
 
 ### Quick Property Reference
 

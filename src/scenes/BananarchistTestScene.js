@@ -5,6 +5,7 @@ import Bananarchist from '../entities/Bananarchist.js';
 import { init as audioInit, music } from '../AudioBus.js';
 import InputService from '../services/InputService.js';
 import MobileControls from '../services/MobileControls.js';
+import { applyCameraPreset, cycleCameraPreset, resolveCameraPresetName } from '../services/CameraPresets.js';
 import { createHUD } from './systems/HUD.js';
 import { setupDebug } from './systems/DebugHelpers.js';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants.js';
@@ -85,9 +86,8 @@ export default class BananarchistTestScene extends BaseLevelScene {
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-    cam.setZoom(2);
     cam.setSize(GAME_WIDTH, GAME_HEIGHT);
-    cam.startFollow(this.player, true, 0.08, 0.08);
+    applyCameraPreset(this, resolveCameraPresetName('desktop'));
 
     if (this.player.body) {
       this.player.body.onWorldBounds = true;
@@ -120,6 +120,10 @@ export default class BananarchistTestScene extends BaseLevelScene {
     if (kb) {
       kb.on('keydown-ESC', () => {
         this.togglePause();
+      });
+      kb.on('keydown-F7', () => {
+        const preset = cycleCameraPreset(this);
+        if (console?.info) console.info(`Camera preset: ${preset}`);
       });
     }
   }

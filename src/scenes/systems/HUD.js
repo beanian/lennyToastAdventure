@@ -228,6 +228,7 @@ export function collectToast(scene, toast) {
 export function playerDie(scene) {
   if (scene.isDead) return;
   scene.isDead = true;
+  scene.mobileControls?.setOverlayBlocked?.(true);
   // Disable player collisions to prevent further hurt sounds
   if (scene.playerEnemyCollider) scene.playerEnemyCollider.active = false;
   if (scene.player?.body) scene.player.body.enable = false;
@@ -314,6 +315,7 @@ export function showGameOver(scene) {
 }
 
 export function showLevelSuccess(scene, timeTaken, levelId) {
+  scene.mobileControls?.setOverlayBlocked?.(true);
   const resolvedLevelId = levelId || scene.mapKey || scene.scene.key || 'default';
   const loadLastName = () => {
     if (typeof window === 'undefined') return '';
@@ -516,7 +518,7 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
 
   // Space buttons so they don't overlap: center-to-center >= width + padding
   const gap = btnW + 20;
-  const nextBtn = makeButton('Next Level', -gap, btnY, () => {
+  const nextBtn = makeButton('Replay', -gap, btnY, () => {
     overlay.destroy();
     scene.scene.restart();
   });
@@ -640,6 +642,7 @@ export function showLevelSuccess(scene, timeTaken, levelId) {
 export function showPauseMenu(scene) {
   if (scene.isDead || scene.isPaused) return;
   scene.isPaused = true;
+  scene.mobileControls?.setOverlayBlocked?.(true);
   if (scene.pauseButton) scene.pauseButton.setVisible(false);
   // Pause physics to freeze gameplay, keep timers/tweens active for UI
   scene.physics.world.pause();
@@ -759,7 +762,7 @@ export function showPauseMenu(scene) {
     return group;
   };
 
-  const musicCtl = makeVolumeControl('Background Music', -10, getMusicVolume, setMusicVolume, () => pendingMusic, v => pendingMusic = v);
+  const musicCtl = makeVolumeControl('Music', -10, getMusicVolume, setMusicVolume, () => pendingMusic, v => pendingMusic = v);
   const sfxCtl = makeVolumeControl('SFX', 50, getSfxVolume, setSfxVolume, () => pendingSfx, v => pendingSfx = v);
   options.add([musicCtl, sfxCtl]);
 
@@ -883,6 +886,7 @@ export function showPauseMenu(scene) {
 export function hidePauseMenu(scene) {
   if (!scene.isPaused) return;
   scene.isPaused = false;
+  scene.mobileControls?.setOverlayBlocked?.(false);
   if (scene.pauseButton) scene.pauseButton.setVisible(true);
   if (scene.pauseUI) {
     scene.pauseUI.destroy();

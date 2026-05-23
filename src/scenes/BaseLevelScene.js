@@ -3,6 +3,7 @@ import Player from '../entities/Player.js';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants.js';
 import { init as audioInit, sfx, music } from '../AudioBus.js';
 import InputService from '../services/InputService.js';
+import { applyCameraPreset, cycleCameraPreset, resolveCameraPresetName } from '../services/CameraPresets.js';
 import { createHUD, showLevelSuccess } from './systems/HUD.js';
 import { setupDebug } from './systems/DebugHelpers.js';
 import { spawnEnemy, spawnCollectible } from './systems/Spawners.js';
@@ -51,11 +52,13 @@ export default class BaseLevelScene extends Phaser.Scene {
 
   create() {
     audioInit(this);
+    this.cameras.main.fadeIn(220, 0, 0, 0);
     this.levelTimerStart = null;
     this.levelTimerElapsed = 0;
     this.levelTimerRunning = false;
     this.isLevelComplete = false;
     this.levelEndZone = null;
+    this.levelEndPrompt = null;
     resetLevelStats();
     this.sockroachKills = 0;
     // --- Map + tiles ---
@@ -197,19 +200,11 @@ export default class BaseLevelScene extends Phaser.Scene {
     // --- World & camera bounds ---
     const mapW = map.widthInPixels;
     const mapH = map.heightInPixels;
-    // Choose a zoom that never shrinks the world below the viewport.
-    // If the map is narrower/taller than the screen, zoom in to fill it.
-    // If the map is larger, use 1:1 so only the current area is visible.
-    let zoomW = GAME_WIDTH / Math.max(1, mapW);
-    let zoomH = GAME_HEIGHT / Math.max(1, mapH);
-    let zoom = Math.max(1, Math.max(zoomW, zoomH));
-    zoom = Phaser.Math.Clamp(zoom, 1, 3);
     const cam = this.cameras.main;
-    cam.setZoom(2);
     cam.setBounds(0, 0, mapW, mapH);
     this.physics.world.setBounds(0, 0, mapW, mapH);
     cam.setSize(GAME_WIDTH, GAME_HEIGHT);
-    cam.startFollow(this.player, true, 0.08, 0.08);
+    applyCameraPreset(this, resolveCameraPresetName('desktop'));
 
     // Trigger death if player hits the bottom world bound (fell off level)
     if (this.player.body) {
@@ -244,13 +239,25 @@ export default class BaseLevelScene extends Phaser.Scene {
         const info = getInfo(obj);
         const x = obj.x;
         const y = obj.y - (obj.height || 0);
-        const w = obj.width || map.tileWidth;
-        const h = obj.height || map.tileHeight;
         if (info.props.levelEnd) {
+          const w = obj.width || 64;
+          const h = obj.height || 80;
           const zx = x + w / 2;
           const zy = y + h / 2;
           this.levelEndZone = this.add.zone(zx, zy, w, h);
           this.physics.add.existing(this.levelEndZone, true);
+          this.levelEndPrompt = this.add
+            .text(zx, Math.max(28, y - 10), 'Press Up', {
+              fontFamily: 'Courier',
+              fontSize: '18px',
+              fontStyle: 'bold',
+              color: '#ffcc00',
+              align: 'center'
+            })
+            .setOrigin(0.5, 1)
+            .setStroke('#000000', 4)
+            .setDepth(3)
+            .setVisible(false);
         } else if (info.kind === 'sockroach' || info.kind === 'bananarchist') {
           // Support optional pathName for polyline patrols; else fall back to patrolWidth or default
           spawnEnemy(this, info.kind, x, y, info.props, map, groundLayers);
@@ -276,6 +283,10 @@ export default class BaseLevelScene extends Phaser.Scene {
       kb.on('keydown-ESC', () => {
         this.togglePause();
       });
+      kb.on('keydown-F7', () => {
+        const preset = cycleCameraPreset(this);
+        if (console?.info) console.info(`Camera preset: ${preset}`);
+      });
     }
   }
 
@@ -295,11 +306,12 @@ export default class BaseLevelScene extends Phaser.Scene {
     }
 
     if (this.isLevelComplete) return;
-    if (
-      this.levelEndZone &&
-      this.physics.overlap(this.player, this.levelEndZone) &&
-      this.inputService.upJustPressed()
-    ) {
+    const atLevelEnd = !!(
+      this.levelEndZone && this.physics.overlap(this.player, this.levelEndZone)
+    );
+    if (this.levelEndPrompt) this.levelEndPrompt.setVisible(atLevelEnd);
+
+    if (atLevelEnd && this.inputService.upJustPressed()) {
       this.levelComplete();
       return;
     }
@@ -338,7 +350,7 @@ export default class BaseLevelScene extends Phaser.Scene {
       this.debugText.setText(
         `DEBUG\n` +
           `pos:(${Math.round(this.player.x)},${Math.round(this.player.y)}) vel:(${vx},${vy})\n` +
-          `ground:${!!onGround} jumps:${this.player.jumpCount ?? 0} inv:${!!this.isInvincible} hp:${this.health}\n` +
+          `ground:${!!onGround} air:${this.player.airJumpsUsed ?? 0} inv:${!!this.isInvincible} hp:${this.health}\n` +
           `anim:${anim} enemies:${this.enemies?.getLength?.() ?? 0}`
       );
     }
@@ -346,6 +358,7 @@ export default class BaseLevelScene extends Phaser.Scene {
 
   levelComplete() {
     this.isLevelComplete = true;
+    if (this.levelEndPrompt) this.levelEndPrompt.setVisible(false);
     this.physics.world.pause();
     if (this.playerEnemyCollider) this.playerEnemyCollider.active = false;
     if (this.player?.body) this.player.body.enable = false;
